@@ -1,5 +1,5 @@
 build:
-	@docker build -t spending-analysis ./app
+	@docker build -t spending-analysis .
 
 start:
 	@docker run -d -p 8501:8501 --name spending-analysis --volume $(PWD)/data:/src/data spending-analysis
