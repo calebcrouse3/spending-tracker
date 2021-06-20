@@ -5,7 +5,7 @@ start:
 	@docker run -d -p 8501:8501 \
 		--name spending-analysis \
 		--volume $(PWD)/data:/src/data \
-		--volume $(PWD)/main.py:/src/main.py \
+		--volume $(PWD)/app/:/src/app \
 		spending-analysis
 	@echo http://localhost:8501
 	@sleep 1

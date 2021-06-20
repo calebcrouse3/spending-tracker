@@ -1,6 +1,8 @@
 import pandas as pd
 import streamlit as st
 import os
+from app.describer.describer import describer
+from categories import CATEGORIES
 
 st.set_page_config(layout="wide", page_title="Spending Tracker")
 
@@ -8,6 +10,7 @@ st.set_page_config(layout="wide", page_title="Spending Tracker")
 
 TRANS_KEY_COLS = ["date", "original_description", "amount"]
 
+CONFIG = get_config()
 
 def to_snake(txt):
     words = txt.lower().split(" ")
@@ -52,8 +55,35 @@ def get_uncatted_trans():
 
 def categorized_transactions():
     _navbar()
-    uncatted = get_uncatted_trans()
-    st.write(uncatted)
+    uncatted = get_uncatted_trans().head()
+    df_ncols = uncatted.shape[0]
+    total_ncols = df_ncols+2
+    st.title(f"You have {len(uncatted)} uncategorized transactions")
+    st.title("")
+
+    # headers for columns
+    header_cols = st.beta_columns(total_ncols)
+
+    for i in range(len(uncatted.columns)):
+        header_cols[i].markdown(uncatted.columns[i].upper())
+
+    header_cols[total_ncols - 2].markdown("DESCRIPTION")
+    header_cols[total_ncols - 1].markdown("CATEGORY")
+
+    # write transaction info w dd for
+    for index, row in uncatted.iterrows():
+        value_cols = st.beta_columns(total_ncols)
+        for i in range(len(row.values)):
+            value_cols[i].text(row.values[i])
+
+        # add text box with suggested description
+        suggested_description = "desc" #get_new_description(row["mint_description"])
+        suggested_category = "cat"
+
+        value_cols[total_ncols - 2].text(suggested_description)
+        value_cols[total_ncols - 1].selectbox(label = "", options = ['hi'], key = f"cat_{index}")
+
+        st.markdown("---")
 
 
 def display_trends():
