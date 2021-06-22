@@ -3,21 +3,23 @@ import streamlit as st
 import os
 from describer import describer
 
+st.set_page_config(layout="wide", page_title="Spending Tracker")
+
 # map of main categories and list of sub categories
 CATEGORIES = {
-    "eating & drinking out": ['delivery', 'resturant', 'coffe shops', "bars"],
-    "home": ["rent", "utilities", "home items"],
-    "grocery store": [],
+    "eating & drinking out": ["", "delivery", "resturant", "coffe shops", "bars"],
+    "home": ["" ,"rent", "utilities", "home items"],
+    "grocery store": [""],
     "entertainment media": ["movies", "music", "news", "books"],
-    "amusement": [],
-    "student loans": [],
-    "transportation": ["uber","public"],
-    "lodging": ["airbnb", "hotel"],
-    "shopping": ["music", "sports", "clothing", "electronics"],
-    "health": ["doctor", "pharmacy", "hygene", "gym", "therapy"],
-    "travel": ["airplane"],
-    "government": ["taxes", "dmv"],
-    "insurance": ["renters", "auto"]
+    "amusement": [""],
+    "student loans": [""],
+    "transportation": ["", "uber","public"],
+    "lodging": ["", "airbnb", "hotel"],
+    "shopping": ["", "music", "sports", "clothing", "electronics"],
+    "health": ["", "doctor", "pharmacy", "hygene", "gym", "therapy"],
+    "travel": ["", "airplane"],
+    "government": ["", "taxes", "dmv"],
+    "insurance": ["", "renters", "auto"]
 }
 
 TRANS_KEY_COLS = ["date", "original_description", "amount"]
@@ -27,10 +29,6 @@ PATH_TO_RAW = "./data/raw/"
 PATH_TO_CATEGORIZED = "./data/categorized/"
 
 trans_describer = describer()
-
-st.set_page_config(layout="wide", page_title="Spending Tracker")
-
-# @st.cache(allow_output_mutation=True, show_spinner=True, suppress_st_warning=False)
 
 def to_snake(txt):
     words = txt.lower().split(" ")
@@ -57,30 +55,35 @@ def load_raw_transactions():
 
 
 def load_categorized_transactions():
+    columns = ["date","mint_description","original_description","amount","account_name","category","subcategory"]
     batch_paths = os.listdir(PATH_TO_CATEGORIZED)
     batch_dfs = []
     for file in [PATH_TO_CATEGORIZED + path for path in batch_paths]:
-        batch_dfs.append(pd.read_csv(file))
+        batch_df = pd.read_csv(file)
+        batch_df.columns = columns
+        batch_dfs.append(batch_df)
     concat_df = pd.concat(batch_dfs)
+    return concat_df
 
 
 def save_categorized_transactions(df):
-    batch_paths = os.listdir(PATH_TO_CATEGORIZED)
-    max_batch = max([int(x.split("_")[1].replace(".csv", "")) for x in batch_paths])
-    next_batch_name = f"batch_{str(max_batch+1)}"
-    df.to_csv(PATH_TO_CATEGORIZED + next_batch_name)
+    batch_paths = [x for x in os.listdir(PATH_TO_CATEGORIZED) if x[-4:] == ".csv"]
+    max_batch = -1 if len(batch_paths) == 0 else max([int(x.split("_")[1].replace(".csv", "")) for x in batch_paths])
+    next_batch_name = f"batch_{str(max_batch+1)}.csv"
+    add_header = max_batch == -1
+    df.to_csv(PATH_TO_CATEGORIZED + next_batch_name, index = False, header = add_header)
 
 
 def get_uncatted_trans():
     """return a batch of uncategorized transactions from raw transactions"""
     raw_trans = load_raw_transactions()
 
-    if len(os.listdir("./data/categorized/")) > 0:
+    if len([x for x in os.listdir(PATH_TO_CATEGORIZED) if x[-4:] == ".csv"]) > 0:
         catted = load_categorized_transactions()
         catted_keys = get_trans_keys(catted)
         catted_keys.columns = ["catted_" + col for col in catted_keys.columns]
-        join_catted = raw_trans.merge(catted_keys, left_on = TRANS_KEY_COLS, right_on = catted_keys.columns, how = "left")
-        uncatted_trans = join_catted[catted_keys.columns[0].isna()].drop(catted_keys.columns)
+        join_catted = raw_trans.merge(catted_keys, left_on = TRANS_KEY_COLS, right_on = list(catted_keys.columns), how = "left")
+        uncatted_trans = join_catted[join_catted[catted_keys.columns[0]].isna()].drop(catted_keys.columns, axis = 1)
         return uncatted_trans
 
     else:
@@ -89,10 +92,10 @@ def get_uncatted_trans():
 
 def categorized_transactions():
     _navbar()
-    batch_size = 10
+    batch_size = 5
     uncatted = get_uncatted_trans()
-    uncatted_batch = uncatted.head(batch_size)
-    df_ncols = uncatted.shape[0]
+    uncatted_batch = uncatted.head(batch_size).reset_index(drop=True)
+    df_ncols = uncatted.shape[1]
     total_ncols = df_ncols+3
     st.title(f"You have {len(uncatted)} uncategorized transactions")
     st.title("")
@@ -100,7 +103,7 @@ def categorized_transactions():
     # headers for columns
     header_cols = st.beta_columns(total_ncols)
 
-    for i in range(len(uncatted.columns)):
+    for i in range(len(uncatted_batch.columns)):
         header_cols[i].markdown(uncatted.columns[i].upper())
 
     header_cols[total_ncols - 3].markdown("DESCRIPTION")
@@ -112,7 +115,7 @@ def categorized_transactions():
     assigned_subcategories = ["None"] * batch_size
 
     # write transaction info w dd for
-    for index, row in uncatted.iterrows():
+    for index, row in uncatted_batch.iterrows():
         value_cols = st.beta_columns(total_ncols)
         for i in range(len(row.values)):
             value_cols[i].text(row.values[i])
@@ -133,8 +136,10 @@ def categorized_transactions():
     submit = st.button("Submit and Proceed")
 
     if submit:
-        #uncatted
-        st.text("saving")
+        uncatted_batch["category"] = assigned_categories
+        uncatted_batch["subcategory"] = assigned_subcategories
+        save_categorized_transactions(uncatted_batch)
+
 
 
 def display_trends():
