@@ -1,26 +1,36 @@
+"""
+On startup
+
+1. load raw transactions
+
+2. filter out
+ transfers
+ credit card payments
+ robinhood
+
+3. groupby key and get total value
+
+3. load categorized transactions
+
+4. identify uncategorized transactions
+
+5. clear raw transactions
+
+6. assign descriptions from yaml to uncategorized transactions
+
+7. identify any new description -> category maps and update yaml
+
+"""
+
+
+
+
 import pandas as pd
 import streamlit as st
 import os
-from describer import describer
+import yaml
 
 st.set_page_config(layout="wide", page_title="Spending Tracker")
-
-# map of main categories and list of sub categories
-CATEGORIES = {
-    "eating & drinking out": ["", "delivery", "resturant", "coffe shops", "bars"],
-    "home": ["" ,"rent", "utilities", "home items"],
-    "grocery store": [""],
-    "entertainment media": ["movies", "music", "news", "books"],
-    "amusement": [""],
-    "student loans": [""],
-    "transportation": ["", "uber","public"],
-    "lodging": ["", "airbnb", "hotel"],
-    "shopping": ["", "music", "sports", "clothing", "electronics"],
-    "health": ["", "doctor", "pharmacy", "hygene", "gym", "therapy"],
-    "travel": ["", "airplane"],
-    "government": ["", "taxes", "dmv"],
-    "insurance": ["", "renters", "auto"]
-}
 
 TRANS_KEY_COLS = ["date", "original_description", "amount"]
 
@@ -28,7 +38,12 @@ PATH_TO_RAW = "./data/raw/"
 
 PATH_TO_CATEGORIZED = "./data/categorized/"
 
-trans_describer = describer()
+def load_yaml(path):
+    with open(path, 'r') as stream:
+        try:
+            return yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
 
 def to_snake(txt):
     words = txt.lower().split(" ")
@@ -47,6 +62,9 @@ def get_net_amount(row):
 
 
 def load_raw_transactions():
+    # filter out certain transactions completely
+
+    # group value by transaction keys
     df = pd.read_csv(PATH_TO_RAW + "transactions.csv")
     df.columns = [to_snake(col) for col in df.columns]
     df["amount"] = df.apply(get_net_amount, axis = 1)
