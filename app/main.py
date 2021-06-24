@@ -27,16 +27,35 @@ import pandas as pd
 import streamlit as st
 import os
 import yaml
+from SessionState import get_state
+from os import path
 
 st.set_page_config(layout="wide", page_title="Spending Tracker")
 
+RAW_TRANSACT_SCHEMA = [
+    "date",
+    "original_description",
+    "description",
+    "transaction_type",
+    "amount",
+    "account_name",
+]
+
+CATEGORIZED_TRANSACT_SCHEMA = RAW_TRANSACT_SCHEMA + [
+    "category",
+    "subcategory",
+]
+
 TRANSACT_KEY_COLS = ["date", "original_description", "amount"]
+
 
 PATH_TO_RAW = "./data/raw/"
 
 PATH_TO_CATEGORIZED = "./data/categorized/"
 
 PATH_TO_DESCRIPTION_MAP = "./app/descriptions.yml"
+
+PATH_TO_CATEGORIES = "./app/categories.yml"
 
 
 def load_yaml(path):
@@ -101,27 +120,14 @@ def load_raw_transactions():
     # parse original descriptions to get pretty descriptions
     group_df["description"] = get_pretty_descriptions(group_df["original_description"].values)
 
-    return group_df
+    return group_df[RAW_TRANSACT_SCHEMA]
 
 
 def load_categorized_transactions():
-    columns = [
-        "date",
-        "mint_description",
-        "original_description",
-        "amount",
-        "account_name",
-        "category",
-        "subcategory",
-    ]
-    batch_paths = os.listdir(PATH_TO_CATEGORIZED)
-    batch_dfs = []
-    for file in [PATH_TO_CATEGORIZED + path for path in batch_paths]:
-        batch_df = pd.read_csv(file)
-        batch_df.columns = columns
-        batch_dfs.append(batch_df)
-    concat_df = pd.concat(batch_dfs)
-    return concat_df
+    if path.exists(PATH_TO_CATEGORIZED + "transactions.csv"):
+        return pd.load_csv(PATH_TO_CATEGORIZED)
+    else:
+        return None
 
 
 def save_categorized_transactions(df):
@@ -136,46 +142,60 @@ def save_categorized_transactions(df):
     df.to_csv(PATH_TO_CATEGORIZED + next_batch_name, index=False, header=add_header)
 
 
-def get_uncatted_trans():
+def get_uncategorized_transactions(raw_df, categorized_df):
     """return a batch of uncategorized transactions from raw transactions"""
-    raw_trans = load_raw_transactions()
-
-    if len([x for x in os.listdir(PATH_TO_CATEGORIZED) if x[-4:] == ".csv"]) > 0:
-        catted = load_categorized_transactions()
-        catted_keys = get_trans_keys(catted)
-        catted_keys.columns = ["catted_" + col for col in catted_keys.columns]
-        join_catted = raw_trans.merge(
-            catted_keys,
-            left_on=TRANS_KEY_COLS,
-            right_on=list(catted_keys.columns),
+    if categorized_df == None:
+        return raw_df
+    else:
+        categorized_keys = get_transact_keys(categorized_df)
+        categorized_keys.columns = ["cat_" + col for col in categorized_keys.columns]
+        join_categorized = raw_df.merge(
+            categorized_keys,
+            left_on=TRANSACT_KEY_COLS,
+            right_on=list(categorized_keys.columns),
             how="left",
         )
-        uncatted_trans = join_catted[join_catted[catted_keys.columns[0]].isna()].drop(
-            catted_keys.columns, axis=1
+        uncategorized_df = join_categorized[join_categorized[categorized_keys.columns[0]].isna()].drop(
+            categorized_keys.columns, axis=1
         )
-        return uncatted_trans
-
-    else:
-        return raw_trans
+        return uncategorized_df
 
 
-def categorized_transactions():
+def categorized_transactions(ss):
+    """categorize a batch on new transactions and append them to categorized """
     _navbar()
-    batch_size = 5
-    uncatted = get_uncatted_trans()
-    uncatted_batch = uncatted.head(batch_size).reset_index(drop=True)
-    df_ncols = uncatted.shape[1]
-    total_ncols = df_ncols + 3
-    st.title(f"You have {len(uncatted)} uncategorized transactions")
+
+    # get total number of uncategorized transactions
+    n_uncatted = len(ss.uncategorized_transact_df)
+
+    st.title(f"You have {n_uncatted} uncategorized transactions")
     st.title("")
+
+    # TODO space to add new description rules
+    new_descript_cols = st.beta_columns((3, 1, 10))
+    new_descript_cols[0].text_input("New Description Rule")
+    new_descript_cols[1].markdown("")
+    new_descript_cols[1].markdown("")
+    apply_descript_rule = new_descript_cols[1].button("Apply")
+    st.markdown("")
+
+    # if the apply button is hit, add the description and update descriptions in uncategorized
+    if apply_descript_rule:
+        st.write("applying rule")
+
+    batch_size = 5
+    batch_indicies = ss.uncategorized_transact_df.index[0:batch_size]
+    uncatted_batch = ss.uncategorized_transact_df.iloc[batch_indicies, :]
+
+    # get total number of columns needed to display data and wigits
+    total_ncols = len(uncatted_batch.columns) + 2
 
     # headers for columns
     header_cols = st.beta_columns(total_ncols)
 
     for i in range(len(uncatted_batch.columns)):
-        header_cols[i].markdown(uncatted.columns[i].upper())
+        header_cols[i].markdown(uncatted_batch.columns[i].upper())
 
-    header_cols[total_ncols - 3].markdown("DESCRIPTION")
     header_cols[total_ncols - 2].markdown("CATEGORY")
     header_cols[total_ncols - 1].markdown("SUB CATEGORY")
 
@@ -183,30 +203,26 @@ def categorized_transactions():
     assigned_categories = ["None"] * batch_size
     assigned_subcategories = ["None"] * batch_size
 
-    # write transaction info w dd for
-    for index, row in uncatted_batch.iterrows():
+    # write transaction info into grid
+    for index, row in uncatted_batch.reset_index(drop=True).iterrows():
         value_cols = st.beta_columns(total_ncols)
         for i in range(len(row.values)):
             value_cols[i].text(row.values[i])
 
-        suggested_description = trans_describer.get_pretty_description(
-            row["mint_description"]
-        )
-        # suggested_category =
-
-        value_cols[total_ncols - 3].text(suggested_description)
+        # suggested_category
+        # suggested_subcategory
 
         selected_category = value_cols[total_ncols - 2].selectbox(
-            label="", options=list(CATEGORIES.keys()), key=f"cat_{index}"
+            label="", options=list(ss.categories.keys()), key=f"cat_{index}"
         )
         assigned_categories[index] = selected_category
 
-        selected_subcategy = value_cols[total_ncols - 1].selectbox(
+        selected_subcategory = value_cols[total_ncols - 1].selectbox(
             label="",
-            options=CATEGORIES[assigned_categories[index]],
+            options=ss.categories[assigned_categories[index]],
             key=f"subcat_{index}",
         )
-        assigned_subcategories[index] = selected_subcategy
+        assigned_subcategories[index] = selected_subcategory
 
         st.markdown("---")
 
@@ -218,9 +234,18 @@ def categorized_transactions():
         save_categorized_transactions(uncatted_batch)
 
 
-def display_trends():
+def display_trends(ss):
     _navbar()
+    st.write(ss.categorized_transact_df)
     st.write("This is where the trends will go")
+
+
+def load_categories():
+    cats_yaml = load_yaml(PATH_TO_CATEGORIES)
+    categories = {}
+    for cat in cats_yaml['categories']:
+        categories[cat["name"]] = cat["subcategories"]
+    return categories
 
 
 def home_page():
@@ -252,6 +277,24 @@ def _navbar() -> None:
 
 def _main() -> None:
 
+    # create session state
+    ss = get_state()
+
+    # it session state not initialized, intialize data frames in session state
+    if ss.initialized == None:
+        ss.raw_transact_df = load_raw_transactions()
+        ss.categorized_transact_df = load_categorized_transactions()
+        ss.uncategorized_transact_df = get_uncategorized_transactions(
+            ss.raw_transact_df,
+            ss.categorized_transact_df,
+        )
+        ss.initialized = True
+        # raw transactions not needed to clear from state
+        ss.categories = load_categories()
+        ss.raw_transact_df = None
+        # TODO
+        # ss.description_category_map = get_description_category_map()
+
     params = st.experimental_get_query_params()
     page = params.get("page", ["home"])[0]
 
@@ -259,14 +302,16 @@ def _main() -> None:
         home_page()
 
     elif page == "categorize":
-        categorized_transactions()
+        categorized_transactions(ss)
 
     elif page == "trends":
-        display_trends()
+        display_trends(ss)
 
     else:
         _navbar()
         st.write("not a page")
+
+    ss.sync()
 
 
 if __name__ == "__main__":
