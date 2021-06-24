@@ -1,0 +1,5 @@
+bandit==1.7.0
+black==21.5b1
+mypy==0.812
+pylint==2.8.2
+yamllint==1.26.1

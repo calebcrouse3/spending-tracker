@@ -1,0 +1,8 @@
+[BASIC]
+good-names=df
+
+[MASTER]
+jobs=4
+
+[MESSAGES CONTROL]
+disable=duplicate-code,expression-not-assigned,import-error,no-member,no-name-in-module,pointless-statement

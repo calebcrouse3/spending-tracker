@@ -17,3 +17,14 @@ stop:
 
 backup:
 	@cat ./data/categorized/*.csv > ./data/backups/categorized_transactions_backup_`date +%Y%m%d`.csv
+
+python-linter-build:
+	@docker build -t python-linter python-linter/.
+
+python-lint:
+	@docker run \
+		--name python-linter \
+		--rm \
+		-it \
+		-v $(PWD):/src \
+		python-linter
