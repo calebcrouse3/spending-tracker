@@ -23,8 +23,6 @@ On startup
 """
 
 
-
-
 import pandas as pd
 import streamlit as st
 import os
@@ -32,48 +30,90 @@ import yaml
 
 st.set_page_config(layout="wide", page_title="Spending Tracker")
 
-TRANS_KEY_COLS = ["date", "original_description", "amount"]
+TRANSACT_KEY_COLS = ["date", "original_description", "amount"]
 
 PATH_TO_RAW = "./data/raw/"
 
 PATH_TO_CATEGORIZED = "./data/categorized/"
 
+PATH_TO_DESCRIPTION_MAP = "./app/descriptions.yml"
+
+
 def load_yaml(path):
-    with open(path, 'r') as stream:
+    with open(path, "r") as stream:
         try:
             return yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             print(exc)
+
 
 def to_snake(txt):
     words = txt.lower().split(" ")
     return "_".join(words)
 
 
-def get_trans_keys(df):
+def get_transact_keys(df):
     return df[TRANS_KEY_COLS].drop_duplicates()
 
 
-def get_net_amount(row):
-    if row['transaction_type'] == 'debit':
-        return row['amount']
+def lookup_description(original_description, descr_map):
+    # contain to hold any description matches
+    # some descriptions might be subsets of other
+    matched = []
+
+    # if any phrases in identity_phrases are substring of original_description
+    # pretty descript is phrase
+    for phrase in descr_map['description_maps']['identity_phrases']:
+        if phrase.lower() in original_description.lower():
+            matched.append(phrase.title())
+
+    for phrase_map in descr_map['description_maps']['phrase_maps']:
+        if phrase_map['key_phrase'].lower() in original_description.lower():
+            matched.append(phrase_map['description'].title())
+
+    if len(matched) == 0:
+        return original_description
     else:
-        return row['amount'] * -1
+        lengths = [len(txt) for txt in matched]
+        max_len = max(lengths)
+        max_len_idx = lengths.index(max_len)
+        return matched[max_len_idx]
+
+
+def get_pretty_descriptions(original_descriptions):
+    descr_map = load_yaml(PATH_TO_DESCRIPTION_MAP)
+    new_descriptions = []
+    for orig in original_descriptions:
+        new_descriptions.append(lookup_description(orig, descr_map))
+    return new_descriptions
 
 
 def load_raw_transactions():
-    # filter out certain transactions completely
-
-    # group value by transaction keys
     df = pd.read_csv(PATH_TO_RAW + "transactions.csv")
     df.columns = [to_snake(col) for col in df.columns]
-    df["amount"] = df.apply(get_net_amount, axis = 1)
-    df.rename(columns = {"description": "mint_description"}, inplace = True)
-    return df.drop(["transaction_type","category","labels","notes"], axis = 1)
+
+    # remove repeated white space characters
+    df['original_description'] = df['original_description'].apply(lambda txt: ' '.join(txt.split()))
+
+    # group by all values to aggregate duplicate transactions
+    group_df = df.groupby(["date", "original_description", "transaction_type", "account_name"], as_index = False).amount.sum()
+
+    # parse original descriptions to get pretty descriptions
+    group_df["description"] = get_pretty_descriptions(group_df["original_description"].values)
+
+    return group_df
 
 
 def load_categorized_transactions():
-    columns = ["date","mint_description","original_description","amount","account_name","category","subcategory"]
+    columns = [
+        "date",
+        "mint_description",
+        "original_description",
+        "amount",
+        "account_name",
+        "category",
+        "subcategory",
+    ]
     batch_paths = os.listdir(PATH_TO_CATEGORIZED)
     batch_dfs = []
     for file in [PATH_TO_CATEGORIZED + path for path in batch_paths]:
@@ -86,10 +126,14 @@ def load_categorized_transactions():
 
 def save_categorized_transactions(df):
     batch_paths = [x for x in os.listdir(PATH_TO_CATEGORIZED) if x[-4:] == ".csv"]
-    max_batch = -1 if len(batch_paths) == 0 else max([int(x.split("_")[1].replace(".csv", "")) for x in batch_paths])
+    max_batch = (
+        -1
+        if len(batch_paths) == 0
+        else max([int(x.split("_")[1].replace(".csv", "")) for x in batch_paths])
+    )
     next_batch_name = f"batch_{str(max_batch+1)}.csv"
     add_header = max_batch == -1
-    df.to_csv(PATH_TO_CATEGORIZED + next_batch_name, index = False, header = add_header)
+    df.to_csv(PATH_TO_CATEGORIZED + next_batch_name, index=False, header=add_header)
 
 
 def get_uncatted_trans():
@@ -100,8 +144,15 @@ def get_uncatted_trans():
         catted = load_categorized_transactions()
         catted_keys = get_trans_keys(catted)
         catted_keys.columns = ["catted_" + col for col in catted_keys.columns]
-        join_catted = raw_trans.merge(catted_keys, left_on = TRANS_KEY_COLS, right_on = list(catted_keys.columns), how = "left")
-        uncatted_trans = join_catted[join_catted[catted_keys.columns[0]].isna()].drop(catted_keys.columns, axis = 1)
+        join_catted = raw_trans.merge(
+            catted_keys,
+            left_on=TRANS_KEY_COLS,
+            right_on=list(catted_keys.columns),
+            how="left",
+        )
+        uncatted_trans = join_catted[join_catted[catted_keys.columns[0]].isna()].drop(
+            catted_keys.columns, axis=1
+        )
         return uncatted_trans
 
     else:
@@ -114,7 +165,7 @@ def categorized_transactions():
     uncatted = get_uncatted_trans()
     uncatted_batch = uncatted.head(batch_size).reset_index(drop=True)
     df_ncols = uncatted.shape[1]
-    total_ncols = df_ncols+3
+    total_ncols = df_ncols + 3
     st.title(f"You have {len(uncatted)} uncategorized transactions")
     st.title("")
 
@@ -138,15 +189,23 @@ def categorized_transactions():
         for i in range(len(row.values)):
             value_cols[i].text(row.values[i])
 
-        suggested_description = trans_describer.get_pretty_description(row["mint_description"])
-        #suggested_category =
+        suggested_description = trans_describer.get_pretty_description(
+            row["mint_description"]
+        )
+        # suggested_category =
 
         value_cols[total_ncols - 3].text(suggested_description)
 
-        selected_category = value_cols[total_ncols - 2].selectbox(label = "", options = list(CATEGORIES.keys()), key = f"cat_{index}")
+        selected_category = value_cols[total_ncols - 2].selectbox(
+            label="", options=list(CATEGORIES.keys()), key=f"cat_{index}"
+        )
         assigned_categories[index] = selected_category
 
-        selected_subcategy = value_cols[total_ncols - 1].selectbox(label = "", options = CATEGORIES[assigned_categories[index]], key = f"subcat_{index}")
+        selected_subcategy = value_cols[total_ncols - 1].selectbox(
+            label="",
+            options=CATEGORIES[assigned_categories[index]],
+            key=f"subcat_{index}",
+        )
         assigned_subcategories[index] = selected_subcategy
 
         st.markdown("---")
@@ -157,7 +216,6 @@ def categorized_transactions():
         uncatted_batch["category"] = assigned_categories
         uncatted_batch["subcategory"] = assigned_subcategories
         save_categorized_transactions(uncatted_batch)
-
 
 
 def display_trends():
