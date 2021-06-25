@@ -34,40 +34,29 @@ description_maps:
     - "northside"
     - "origin coffee lab"
     - "citicards cash reward"
+    - "7-eleven"
   phrase_maps:
-    -
-      key_phrase: "electronic funds transfer"
+    - key_phrase: "electronic funds transfer"
       description: "transfer"
-    -
-      key_phrase: "Payment Thank You - Web"
+    - key_phrase: "Payment Thank You - Web"
       description: "transfer"
-    -
-      key_phrase: "citi card online payment"
+    - key_phrase: "citi card online payment"
       description: "transfer"
-    -
-      key_phrase: "amzn"
+    - key_phrase: "amzn"
       description: "amazon"
-    -
-      key_phrase: "cromwell"
+    - key_phrase: "cromwell"
       description: "rent cromwell"
-    -
-      key_phrase: "education student ln"
+    - key_phrase: "education student ln"
       description: "student loans"
-    -
-      key_phrase: "harris"
+    - key_phrase: "harris"
       description: "harris teeter"
-    -
-      key_phrase: "garage"
+    - key_phrase: "garage"
       description: "parking"
-    -
-      key_phrase: "parkmobile"
+    - key_phrase: "parkmobile"
       description: "parking"
-    -
-      key_phrase: "long term"
+    - key_phrase: "long term"
       description: "parking"
-    -
-      key_phrase: "bird app"
+    - key_phrase: "bird app"
       description: "bird scooters"
-    -
-      key_phrase: "foreign exchange rate adjustment fee"
+    - key_phrase: "foreign exchange rate adjustment fee"
       description: "foreign exchange fee"

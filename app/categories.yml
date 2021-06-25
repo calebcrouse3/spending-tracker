@@ -1,54 +1,45 @@
 categories:
-    -
-      name: "eating & drinking out"
+    - name: "eating & drinking out"
       subcategories:
         - ""
         - "delivery"
         - "resturants"
         - "coffee shops"
         - "bars"
-    -
-      name: "home"
+    - name: "home"
       subcategories:
         - ""
         - "rent"
         - "utilities"
         - "home items"
-    -
-      name: "grocery store"
+    - name: "grocery store"
       subcategories:
         - ""
-    -
-      name: "entertainment media"
+    - name: "entertainment media"
       subcategories:
         - ""
         - "movies"
         - "music"
         - "news"
         - "books"
-    -
-      name: "amusement"
+    - name: "amusement"
       subcategories:
         - ""
-    -
-      name: "student loans"
+    - name: "student loans"
       subcategories:
         - ""
-    -
-      name: "transportation"
+    - name: "transportation"
       subcategories:
         - ""
         - "gas"
         - "uber"
         - "public"
-    -
-      name: "lodging"
+    - name: "lodging"
       subcategories:
         - ""
         - "airbnb"
         - "hotel"
-    -
-      name: "shopping"
+    - name: "shopping"
       subcategories:
         - ""
         - "music"
@@ -56,8 +47,7 @@ categories:
         - "clothing"
         - "electronics"
         - "durables"
-    -
-      name: "health"
+    - name: "health"
       subcategories:
         - ""
         - "doctor"
@@ -65,25 +55,21 @@ categories:
         - "hygene"
         - "gym"
         - "therapy"
-    -
-      name: "travel"
+    - name: "travel"
       subcategories:
         - ""
         - "airplane"
-    -
-      name: "government"
+    - name: "government"
       subcategories:
         - ""
         - "taxes"
         - "dmv"
         - "tickets"
-    -
-      name: "insurance"
+    - name: "insurance"
       subcategories:
         - ""
         - "renters"
         - "auto"
-    -
-      name: "uncategorized"
+    - name: "uncategorized"
       subcategories:
         - ""
