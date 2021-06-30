@@ -155,9 +155,23 @@ def lookup_category(descr, ss):
 
 
 
+def apply_descr_rule(rule_txt):
+    """checks that a rule is valid and appends it to description yaml
+    rule should be of the following form
+    "coffee"
+    "Amzn": "Amazon"
+    """
+
+
+
+    # if rule_txt.co
+    st.write("applying rule")
+
+
+
 def categorized_transactions(ss):
     """categorize a batch of new transactions and append them to categorized """
-    _navbar()
+    _navbar(ss)
 
     # get total number of uncategorized transactions
     n_uncatted = len(ss.uncategorized_transact_df)
@@ -167,7 +181,7 @@ def categorized_transactions(ss):
 
     # TODO space to add new description rules
     new_descript_cols = st.beta_columns((3, 1, 10))
-    new_descript_cols[0].text_input("New Description Rule")
+    descr_rule_def = new_descript_cols[0].text_input("New Description Rule")
     new_descript_cols[1].markdown("")
     new_descript_cols[1].markdown("")
     apply_descript_rule = new_descript_cols[1].button("Apply")
@@ -175,7 +189,7 @@ def categorized_transactions(ss):
 
     # if the apply button is hit, add the description and update descriptions in uncategorized
     if apply_descript_rule:
-        st.write("applying rule")
+        apply_descr_rule(descr_rule_def)
 
     batch_size = 5
     batch_indicies = ss.uncategorized_transact_df.index[0:batch_size]
@@ -252,7 +266,7 @@ def categorized_transactions(ss):
 
 
 def display_trends(ss):
-    _navbar()
+    _navbar(ss)
     st.write(ss.categorized_transact_df)
     st.write(ss.description_category_map)
     st.write("This is where the trends will go")
@@ -266,29 +280,25 @@ def load_categories():
     return categories
 
 
-def home_page():
-    _navbar()
+def home_page(ss):
+    _navbar(ss)
     st.write("Welcome to your spending tracker!")
 
 
-def _navbar() -> None:
+def _navbar(ss) -> None:
     """Display navbar."""
     cols = st.beta_columns(8)
 
-    cols[0].markdown(
-        f"<a href='/'>&#128200; Home</a>",
-        unsafe_allow_html=True,
-    )
+    home_button = cols[0].button("Home")
+    catz_button = cols[1].button("Categorize")
+    trends_button = cols[2].button("Trends")
 
-    cols[1].markdown(
-        f"<a href='/?page=categorize'>&#128269; Categorize</a>",
-        unsafe_allow_html=True,
-    )
-
-    cols[2].markdown(
-        f"<a href='/?page=trends'>&#128200; Trends</a>",
-        unsafe_allow_html=True,
-    )
+    if home_button:
+        ss.page = "home"
+    if catz_button:
+        ss.page = "categorize"
+    if trends_button:
+        ss.page = "trends"
 
     st.markdown("---")
 
@@ -336,6 +346,7 @@ def _main() -> None:
 
     # it session state not initialized, intialize data frames in session state
     if ss.initialized == None:
+        ss.page = "home"
         ss.raw_transact_df = load_raw_transactions()
         ss.categorized_exists = path.exists(PATH_TO_CATEGORIZED + "transactions.csv")
         ss.categorized_transact_df = load_categorized_transactions(ss)
@@ -347,19 +358,19 @@ def _main() -> None:
         ss.description_category_map = get_description_category_map(ss)
 
     params = st.experimental_get_query_params()
-    page = params.get("page", ["home"])[0]
+    #page = params.get("page", ["home"])[0]
 
-    if page == "home":
-        home_page()
+    if ss.page == "home":
+        home_page(ss)
 
-    elif page == "categorize":
+    elif ss.page == "categorize":
         categorized_transactions(ss)
 
-    elif page == "trends":
+    elif ss.page == "trends":
         display_trends(ss)
 
     else:
-        _navbar()
+        _navbar(ss)
         st.write("not a page")
 
     ss.sync()
