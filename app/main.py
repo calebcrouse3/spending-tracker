@@ -13,27 +13,26 @@ st.set_page_config(layout="wide", page_title="Spending Tracker")
 RAW_TRANSACT_SCHEMA = [
     "date",
     "original_description",
-    "description",
     "transaction_type",
     "amount",
     "account_name",
 ]
 
 CATEGORIZED_TRANSACT_SCHEMA = RAW_TRANSACT_SCHEMA + [
+    "description",
     "category",
     "subcategory",
 ]
 
 TRANSACT_KEY_COLS = ["date", "original_description", "amount"]
 
+PATH_TO_RAW = "./data/raw/transactions.csv"
 
-PATH_TO_RAW = "./data/raw/"
-
-PATH_TO_CATEGORIZED = "./data/categorized/"
+PATH_TO_CATEGORIZED = "./data/categorized/transactions.csv"
 
 PATH_TO_DESCRIPTION_MAP = "./app/descriptions.yml"
 
-PATH_TO_CATEGORIES = "./app/categories.yml"
+PATH_TO_CATS = "./app/categories.yml"
 
 ss = get_state()
 
@@ -54,18 +53,18 @@ def get_transact_keys(df):
     return df[TRANSACT_KEY_COLS].drop_duplicates()
 
 
-def lookup_description(original_description, descr_map):
+def lookup_description(original_description):
     # contain to hold any description matches
     # some descriptions might be subsets of other
     matched = []
 
     # if any phrases in identity_phrases are substring of original_description
     # pretty descript is phrase
-    for phrase in descr_map['description_maps']['identity_phrases']:
+    for phrase in ss.descr['identity_phrases']:
         if phrase.lower() in original_description.lower():
             matched.append(phrase.title())
 
-    for phrase_map in descr_map['description_maps']['phrase_maps']:
+    for phrase_map in ss.descr['phrase_maps']:
         if phrase_map['key_phrase'].lower() in original_description.lower():
             matched.append(phrase_map['description'].title())
 
@@ -86,8 +85,8 @@ def get_pretty_descriptions(original_descriptions):
     return new_descriptions
 
 
-def load_raw_transactions():
-    df = pd.read_csv(PATH_TO_RAW + "transactions.csv")
+def load_raw_trans():
+    df = pd.read_csv(PATH_TO_RAW)
     df.columns = [to_snake(col) for col in df.columns]
 
     # remove repeated white space characters
@@ -96,15 +95,14 @@ def load_raw_transactions():
     # group by all values to aggregate duplicate transactions
     group_df = df.groupby(["date", "original_description", "transaction_type", "account_name"], as_index = False).amount.sum()
 
-    # parse original descriptions to get pretty descriptions
-    group_df["description"] = get_pretty_descriptions(group_df["original_description"].values)
+    group_df["amount"] = group_df["amount"].round(2)
 
-    return group_df[RAW_TRANSACT_SCHEMA].sort_values("description")
+    return group_df[RAW_TRANSACT_SCHEMA].sort_values("date")
 
 
-def load_categorized_transactions():
-    if ss.categorized_exists:
-        return pd.read_csv(PATH_TO_CATEGORIZED + "transactions.csv")
+def load_catted_trans():
+    if ss.catted_exists:
+        return pd.read_csv(PATH_TO_CATEGORIZED)
     else:
         return None
 
@@ -122,14 +120,14 @@ def save_categorized_transactions():
 
 
 
-def get_uncategorized_transactions():
+def get_uncatted_trans():
     """return a batch of uncategorized transactions from raw transactions"""
-    if not ss.categorized_exists:
-        return ss.raw_transact_df
+    if not ss.catted_exists:
+        return ss.raw_trans_df
     else:
-        categorized_keys = get_transact_keys(ss.categorized_transact_df)
+        categorized_keys = get_transact_keys(ss.catted_trans_df)
         categorized_keys.columns = ["cat_" + col for col in categorized_keys.columns]
-        join_categorized = ss.raw_transact_df.merge(
+        join_categorized = ss.raw_trans_df.merge(
             categorized_keys,
             left_on=TRANSACT_KEY_COLS,
             right_on=list(categorized_keys.columns),
@@ -142,13 +140,14 @@ def get_uncategorized_transactions():
 
 
 def lookup_category(descr):
-    if descr in ss.description_category_map.keys():
-        category = ss.description_category_map[descr]["category"]
-        subcategory = ss.description_category_map[descr]["subcategory"]
-        # find index of category in ss.categories
-        cat_list = list(ss.categories.keys())
+    """gets the index of the correct category/subcategory in ss.cats"""
+    if descr in ss.descr_cat_map.keys():
+        category = ss.descr_cat_map[descr]["category"]
+        subcategory = ss.descr_cat_map[descr]["subcategory"]
+        # find index of category in ss.cats
+        cat_list = list(ss.cats.keys())
         cat_index = cat_list.index(category)
-        subcat_list = ss.categories[category]
+        subcat_list = ss.cats[category]
         subcat_index = subcat_list.index(subcategory)
         return cat_index, subcat_index
     else:
@@ -156,45 +155,62 @@ def lookup_category(descr):
 
 
 
-def apply_descr_rule(rule_txt):
-    """checks that a rule is valid and appends it to description yaml
-    rule should be of the following form
-    "coffee"
-    "Amzn": "Amazon"
-    """
+def update_descr_maps(rule_txt, rule_type):
+    """adds the new description to ss and overwrites yamls"""
+
+    if rule_type == "identity":
+        format_txt = rule_txt.replace("'", "")
+        ss.descr["identity_phrases"] += [format_txt]
+
+    elif rule_type == "phrase_map":
+        new_phrase = {}
+
+        split_kv = rule_txt.split(":")
+        new_phrase["key_phrase"] = split_kv[0].replace("'", "").strip()
+        new_phrase["description"] = split_kv[1].replace("'", "").strip()
+
+        ss.descr["phrase_maps"] += [new_phrase]
+
+    # overwrite yaml file with updated state
+    with open(PATH_TO_DESCRIPTION_MAP, "w") as f:
+        yaml.dump(ss.descr, f)
 
 
 
-    # if rule_txt.co
-    st.write("applying rule")
+def descr_adder_wigit():
+    cols = st.beta_columns((3, 1, 10))
+    descr_rule_def = cols[0].text_input("New Description Rule")
+    cols[1].markdown("")
+    cols[1].markdown("")
+    apply_descript_rule = cols[1].button("Apply")
+    st.markdown("")
+
+    # if button clicked
+    if apply_descript_rule:
+        rule_type = "phrase_map" if ":" in descr_rule_def else "identity"
+        update_descr_maps(descr_rule_def, rule_type)
+
+
 
 
 
 def categorized_transactions():
-    """categorize a batch of new transactions and append them to categorized """
+    """categorize a batch of new transactions and append them to categorized"""
     _navbar()
 
     # get total number of uncategorized transactions
-    n_uncatted = len(ss.uncategorized_transact_df)
+    n_uncatted = len(ss.uncatted_trans_df)
 
     st.title(f"You have {n_uncatted} uncategorized transactions")
     st.title("")
 
-    # TODO space to add new description rules
-    new_descript_cols = st.beta_columns((3, 1, 10))
-    descr_rule_def = new_descript_cols[0].text_input("New Description Rule")
-    new_descript_cols[1].markdown("")
-    new_descript_cols[1].markdown("")
-    apply_descript_rule = new_descript_cols[1].button("Apply")
-    st.markdown("")
-
-    # if the apply button is hit, add the description and update descriptions in uncategorized
-    if apply_descript_rule:
-        apply_descr_rule(descr_rule_def)
+    descr_adder_wigit()
 
     batch_size = 5
-    batch_indicies = ss.uncategorized_transact_df.index[0:batch_size]
-    uncatted_batch = ss.uncategorized_transact_df.iloc[batch_indicies, :]
+    batch_indicies = ss.uncatted_trans_df.index[0:batch_size]
+    uncatted_batch = ss.uncatted_trans_df.iloc[batch_indicies, :]
+
+    uncatted_batch["description"] = uncatted_batch["original_description"].apply(lambda x: lookup_description(x))
 
     # get total number of columns needed to display data and wigits
     total_ncols = len(uncatted_batch.columns) + 2
@@ -202,15 +218,16 @@ def categorized_transactions():
     # headers for columns
     header_cols = st.beta_columns(total_ncols)
 
+    # write column headers
     for i in range(len(uncatted_batch.columns)):
         header_cols[i].markdown(uncatted_batch.columns[i].upper())
 
     header_cols[total_ncols - 2].markdown("CATEGORY")
     header_cols[total_ncols - 1].markdown("SUB CATEGORY")
 
-    # container for category_values
-    assigned_categories = ["None"] * batch_size
-    assigned_subcategories = ["None"] * batch_size
+    # container for category values
+    assigned_cats = ["None"] * batch_size
+    assigned_subcats = ["None"] * batch_size
 
     # write transaction info into grid
     for index, row in uncatted_batch.reset_index(drop=True).iterrows():
@@ -218,23 +235,24 @@ def categorized_transactions():
         for i in range(len(row.values)):
             value_cols[i].text(row.values[i])
 
+        # get suggested categoies based on this description
         sugg_cat, sugg_subcat = lookup_category(row["description"])
 
         selected_category = value_cols[total_ncols - 2].selectbox(
             label="",
-            options=list(ss.categories.keys()),
+            options=list(ss.cats.keys()),
             key=f"cat_{index}",
             index=sugg_cat,
         )
-        assigned_categories[index] = selected_category
+        assigned_cats[index] = selected_category
 
         selected_subcategory = value_cols[total_ncols - 1].selectbox(
             label="",
-            options=ss.categories[assigned_categories[index]],
+            options=ss.cats[assigned_cats[index]],
             key=f"subcat_{index}",
             index = sugg_subcat,
         )
-        assigned_subcategories[index] = selected_subcategory
+        assigned_subcats[index] = selected_subcategory
 
         st.markdown("---")
 
@@ -242,43 +260,42 @@ def categorized_transactions():
 
     if submit:
         # add category and subcategory assignments to batch
-        uncatted_batch["category"] = assigned_categories
-        uncatted_batch["subcategory"] = assigned_subcategories
+        uncatted_batch["category"] = assigned_cats
+        uncatted_batch["subcategory"] = assigned_subcats
 
         # append batch to categorized transactions
-        if ss.categorized_exists:
-            ss.categorized_transact_df = pd.concat([
-                ss.categorized_transact_df,
+        if ss.catted_exists:
+            ss.catted_trans_df = pd.concat([
+                ss.catted_trans_df,
                 uncatted_batch[CATEGORIZED_TRANSACT_SCHEMA]
             ])
         else:
-            ss.categorized_transact_df = uncatted_batch[CATEGORIZED_TRANSACT_SCHEMA]
-            ss.categorized_exists = True
+            ss.catted_trans_df = uncatted_batch[CATEGORIZED_TRANSACT_SCHEMA]
+            ss.catted_exists = True
 
 
         # remove categorized transactions from uncategorized
-        ss.uncategorized_transact_df = ss.uncategorized_transact_df.drop(batch_indicies)
+        ss.uncatted_trans_df = ss.uncatted_trans_df.drop(batch_indicies)
 
         # overwrite file with saved transactions
-        ss.categorized_transact_df.to_csv(PATH_TO_CATEGORIZED + "transactions.csv", index = False)
+        ss.catted_trans_df.to_csv(PATH_TO_CATEGORIZED, index = False)
 
         # update description categoryo map
-        ss.description_category_map = get_description_category_map()
+        ss.descr_cat_map = get_descr_cat_map()
 
 
 def display_trends():
     _navbar()
-    st.write(ss.categorized_transact_df)
-    st.write(ss.description_category_map)
-    st.write("This is where the trends will go")
-
-
-def load_categories():
-    cats_yaml = load_yaml(PATH_TO_CATEGORIES)
-    categories = {}
-    for cat in cats_yaml['categories']:
-        categories[cat["name"]] = cat["subcategories"]
-    return categories
+    st.text("catted_trans_df")
+    st.write(ss.catted_trans_df.head())
+    st.text("uncatted_trans_df")
+    st.write(ss.uncatted_trans_df.head())
+    st.text("cats")
+    st.write(ss.cats)
+    st.text("descr")
+    st.write(ss.descr)
+    st.text("descr_cats_map")
+    st.write(ss.descr_cat_map)
 
 
 def home_page():
@@ -304,15 +321,15 @@ def _navbar() -> None:
     st.markdown("---")
 
 
-def get_description_category_map():
+def get_descr_cat_map():
     """gets a mapping from pretty descriptions to most common category substring
     previously categorized transactions"""
 
     descript_cat_map = {}
 
-    if ss.categorized_exists:
+    if ss.catted_exists:
         # get count of category/subcategory per description
-        cat_count = ss.categorized_transact_df.groupby(
+        cat_count = ss.catted_trans_df.groupby(
             ["description", "category", "subcategory"],
             as_index = False
         ).date.count()
@@ -337,23 +354,23 @@ def get_description_category_map():
     return descript_cat_map
 
 
-
 def _main() -> None:
 
-    # it session state not initialized, intialize data frames in session state
-    if ss.initialized == None:
-        ss.page = "home"
-        ss.raw_transact_df = load_raw_transactions()
-        ss.categorized_exists = path.exists(PATH_TO_CATEGORIZED + "transactions.csv")
-        ss.categorized_transact_df = load_categorized_transactions()
-        ss.uncategorized_transact_df = get_uncategorized_transactions()
-        ss.initialized = True
-        # raw transactions not needed to clear from state
-        ss.categories = load_categories()
-        ss.raw_transact_df = None
-        ss.description_category_map = get_description_category_map()
+    reinit = st.button("re-init")
 
-    params = st.experimental_get_query_params()
+    # it session state not initialized, intialize data frames in session state
+    if ss.initialized == None or reinit:
+        ss.page = "home"
+        ss.initialized = True
+        ss.raw_trans_df = load_raw_trans()
+        ss.catted_exists = path.exists(PATH_TO_CATEGORIZED)
+        ss.catted_trans_df = load_catted_trans()
+        ss.uncatted_trans_df = get_uncatted_trans()
+        ss.cats = load_yaml(PATH_TO_CATS)
+        ss.descr = load_yaml(PATH_TO_DESCRIPTION_MAP)
+        ss.descr_cat_map = get_descr_cat_map()
+        ss.raw_trans_df = None
+
 
     if ss.page == "home":
         home_page()
@@ -363,10 +380,6 @@ def _main() -> None:
 
     elif ss.page == "trends":
         display_trends()
-
-    else:
-        _navbar()
-        st.write("not a page")
 
     ss.sync()
 
