@@ -35,6 +35,7 @@ PATH_TO_DESCRIPTION_MAP = "./app/descriptions.yml"
 
 PATH_TO_CATEGORIES = "./app/categories.yml"
 
+ss = get_state()
 
 def load_yaml(path):
     with open(path, "r") as stream:
@@ -101,14 +102,14 @@ def load_raw_transactions():
     return group_df[RAW_TRANSACT_SCHEMA].sort_values("description")
 
 
-def load_categorized_transactions(ss):
+def load_categorized_transactions():
     if ss.categorized_exists:
         return pd.read_csv(PATH_TO_CATEGORIZED + "transactions.csv")
     else:
         return None
 
 
-def save_categorized_transactions(df):
+def save_categorized_transactions():
     batch_paths = [x for x in os.listdir(PATH_TO_CATEGORIZED) if x[-4:] == ".csv"]
     max_batch = (
         -1
@@ -121,7 +122,7 @@ def save_categorized_transactions(df):
 
 
 
-def get_uncategorized_transactions(ss):
+def get_uncategorized_transactions():
     """return a batch of uncategorized transactions from raw transactions"""
     if not ss.categorized_exists:
         return ss.raw_transact_df
@@ -140,7 +141,7 @@ def get_uncategorized_transactions(ss):
         return uncategorized_df
 
 
-def lookup_category(descr, ss):
+def lookup_category(descr):
     if descr in ss.description_category_map.keys():
         category = ss.description_category_map[descr]["category"]
         subcategory = ss.description_category_map[descr]["subcategory"]
@@ -169,9 +170,9 @@ def apply_descr_rule(rule_txt):
 
 
 
-def categorized_transactions(ss):
+def categorized_transactions():
     """categorize a batch of new transactions and append them to categorized """
-    _navbar(ss)
+    _navbar()
 
     # get total number of uncategorized transactions
     n_uncatted = len(ss.uncategorized_transact_df)
@@ -217,7 +218,7 @@ def categorized_transactions(ss):
         for i in range(len(row.values)):
             value_cols[i].text(row.values[i])
 
-        sugg_cat, sugg_subcat = lookup_category(row["description"], ss)
+        sugg_cat, sugg_subcat = lookup_category(row["description"])
 
         selected_category = value_cols[total_ncols - 2].selectbox(
             label="",
@@ -262,11 +263,11 @@ def categorized_transactions(ss):
         ss.categorized_transact_df.to_csv(PATH_TO_CATEGORIZED + "transactions.csv", index = False)
 
         # update description categoryo map
-        ss.description_category_map = get_description_category_map(ss)
+        ss.description_category_map = get_description_category_map()
 
 
-def display_trends(ss):
-    _navbar(ss)
+def display_trends():
+    _navbar()
     st.write(ss.categorized_transact_df)
     st.write(ss.description_category_map)
     st.write("This is where the trends will go")
@@ -280,12 +281,12 @@ def load_categories():
     return categories
 
 
-def home_page(ss):
-    _navbar(ss)
+def home_page():
+    _navbar()
     st.write("Welcome to your spending tracker!")
 
 
-def _navbar(ss) -> None:
+def _navbar() -> None:
     """Display navbar."""
     cols = st.beta_columns(8)
 
@@ -303,7 +304,7 @@ def _navbar(ss) -> None:
     st.markdown("---")
 
 
-def get_description_category_map(ss):
+def get_description_category_map():
     """gets a mapping from pretty descriptions to most common category substring
     previously categorized transactions"""
 
@@ -337,40 +338,34 @@ def get_description_category_map(ss):
 
 
 
-
-
 def _main() -> None:
-
-    # create session state
-    ss = get_state()
 
     # it session state not initialized, intialize data frames in session state
     if ss.initialized == None:
         ss.page = "home"
         ss.raw_transact_df = load_raw_transactions()
         ss.categorized_exists = path.exists(PATH_TO_CATEGORIZED + "transactions.csv")
-        ss.categorized_transact_df = load_categorized_transactions(ss)
-        ss.uncategorized_transact_df = get_uncategorized_transactions(ss)
+        ss.categorized_transact_df = load_categorized_transactions()
+        ss.uncategorized_transact_df = get_uncategorized_transactions()
         ss.initialized = True
         # raw transactions not needed to clear from state
         ss.categories = load_categories()
         ss.raw_transact_df = None
-        ss.description_category_map = get_description_category_map(ss)
+        ss.description_category_map = get_description_category_map()
 
     params = st.experimental_get_query_params()
-    #page = params.get("page", ["home"])[0]
 
     if ss.page == "home":
-        home_page(ss)
+        home_page()
 
     elif ss.page == "categorize":
-        categorized_transactions(ss)
+        categorized_transactions()
 
     elif ss.page == "trends":
-        display_trends(ss)
+        display_trends()
 
     else:
-        _navbar(ss)
+        _navbar()
         st.write("not a page")
 
     ss.sync()
