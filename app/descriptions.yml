@@ -1,0 +1,64 @@
+identity_phrases:
+- ironnet
+- robinhood
+- home depot
+- amazon
+- venmo
+- remote online deposit
+- simple
+- atm
+- coinbase
+- chase card
+- citi
+- usaa
+- vhc
+- parking
+- 5guys
+- prime video
+- cubesmart
+- hbo
+- bird app
+- bund up
+- total wine
+- bread & water
+- giant
+- idego
+- goat
+- lim*ride
+- onlyfans
+- postmates
+- philz coffee
+- northside
+- origin coffee lab
+- citicards cash reward
+- 7-eleven
+- uber eats
+- spider kellys
+- camp sunshine
+phrase_maps:
+- description: transfer
+  key_phrase: electronic funds transfer
+- description: transfer
+  key_phrase: Payment Thank You - Web
+- description: transfer
+  key_phrase: citi card online payment
+- description: amazon
+  key_phrase: amzn
+- description: rent cromwell
+  key_phrase: cromwell
+- description: student loans
+  key_phrase: education student ln
+- description: harris teeter
+  key_phrase: harris
+- description: parking
+  key_phrase: garage
+- description: parking
+  key_phrase: parkmobile
+- description: parking
+  key_phrase: long term
+- description: bird scooters
+  key_phrase: bird app
+- description: foreign exchange fee
+  key_phrase: foreign exchange rate adjustment fee
+- description: PayMyRent
+  key_phrase: turkson

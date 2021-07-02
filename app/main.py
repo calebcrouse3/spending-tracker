@@ -26,7 +26,9 @@ CATEGORIZED_TRANSACT_SCHEMA = RAW_TRANSACT_SCHEMA + [
 
 TRANSACT_KEY_COLS = ["date", "original_description", "amount"]
 
-PATH_TO_RAW = "./data/raw/transactions.csv"
+PATH_TO_MINT_FOLDER = "./data/raw/mint/"
+
+PATH_TO_AMAZON_FOLDER = "./data/raw/amazon/"
 
 PATH_TO_CATEGORIZED = "./data/categorized/transactions.csv"
 
@@ -34,7 +36,65 @@ PATH_TO_DESCRIPTION_MAP = "./app/descriptions.yml"
 
 PATH_TO_CATS = "./app/categories.yml"
 
+
 ss = get_state()
+
+
+def load_mint_trans():
+    # check that there is only one file in mint folder
+    mint_files = os.listdir(PATH_TO_MINT_FOLDER)
+
+    if len(mint_files) == 1:
+        df = pd.read_csv(PATH_TO_MINT_FOLDER + mint_files[0])
+        df.columns = [to_snake(col) for col in df.columns]
+
+        # remove repeated white space characters
+        df['original_description'] = df['original_description'].apply(lambda txt: ' '.join(txt.split()))
+
+        # group by all values to aggregate duplicate transactions
+        group_df = df.groupby(["date", "original_description", "transaction_type", "account_name"], as_index = False).amount.sum()
+
+        group_df["amount"] = group_df["amount"].round(2)
+
+        return group_df[RAW_TRANSACT_SCHEMA]
+
+    else:
+        return None
+        print("Mint folder needs attention!")
+
+
+def load_raw_trans():
+    # load individual sources of raw transactions
+    mint_df = load_mint_trans()
+    amzn_df = load_amzn_trans()
+
+    #union together
+    raw_trans = pd.concat([mint_df, amzn_df])
+
+    return raw_trans
+
+
+def load_amzn_trans():
+    # check that there is only one file in mint folder
+    amzn_files = os.listdir(PATH_TO_AMAZON_FOLDER)
+
+    if len(amzn_files) == 1:
+        df = pd.read_csv(PATH_TO_AMAZON_FOLDER + amzn_files[0])
+        df.columns = [to_snake(col) for col in df.columns]
+        df["original_description"] = ("AMZN: " + df["title"] + " " + df["category"]).fillna("AMZN: unknown item / return")
+        df["account_name"] = "AMAZON"
+        df["amount"] = df["item_total"].apply(lambda x: float(x.replace("$", "")))
+        df["transaction_type"] = "debit"
+        df.rename(columns =
+                  {"order_date": "date",
+                  }, inplace = True)
+
+        return df[RAW_TRANSACT_SCHEMA]
+
+    else:
+        return None
+        print("Amazon folder needs attention!")
+
 
 def load_yaml(path):
     with open(path, "r") as stream:
@@ -83,21 +143,6 @@ def get_pretty_descriptions(original_descriptions):
     for orig in original_descriptions:
         new_descriptions.append(lookup_description(orig, descr_map))
     return new_descriptions
-
-
-def load_raw_trans():
-    df = pd.read_csv(PATH_TO_RAW)
-    df.columns = [to_snake(col) for col in df.columns]
-
-    # remove repeated white space characters
-    df['original_description'] = df['original_description'].apply(lambda txt: ' '.join(txt.split()))
-
-    # group by all values to aggregate duplicate transactions
-    group_df = df.groupby(["date", "original_description", "transaction_type", "account_name"], as_index = False).amount.sum()
-
-    group_df["amount"] = group_df["amount"].round(2)
-
-    return group_df[RAW_TRANSACT_SCHEMA].sort_values("date")
 
 
 def load_catted_trans():
