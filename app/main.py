@@ -7,38 +7,11 @@ import os
 import yaml
 from SessionState import get_state
 from os import path
+from global_constants import *
 
 st.set_page_config(layout="wide", page_title="Spending Tracker")
 
-RAW_TRANSACT_SCHEMA = [
-    "date",
-    "original_description",
-    "transaction_type",
-    "amount",
-    "account_name",
-]
-
-CATEGORIZED_TRANSACT_SCHEMA = RAW_TRANSACT_SCHEMA + [
-    "description",
-    "category",
-    "subcategory",
-]
-
-TRANSACT_KEY_COLS = ["date", "original_description", "amount"]
-
-PATH_TO_MINT_FOLDER = "./data/raw/mint/"
-
-PATH_TO_AMAZON_FOLDER = "./data/raw/amazon/"
-
-PATH_TO_CATEGORIZED = "./data/categorized/transactions.csv"
-
-PATH_TO_DESCRIPTION_MAP = "./app/descriptions.yml"
-
-PATH_TO_CATS = "./app/categories.yml"
-
-
 ss = get_state()
-
 
 def load_mint_trans():
     # check that there is only one file in mint folder
