@@ -35,6 +35,11 @@ identity_phrases:
 - uber eats
 - spider kellys
 - camp sunshine
+- '"sheetz"'
+- sheetz
+- T.J. MAXX
+- CHICK-FIL-A
+- BEARDED GOAT
 phrase_maps:
 - description: transfer
   key_phrase: electronic funds transfer

@@ -1,4 +1,4 @@
-amusement:
+amusement & recreation:
 - ''
 eating & drinking out:
 - ''
@@ -6,31 +6,34 @@ eating & drinking out:
 - resturants
 - coffee shops
 - bars
-entertainment media:
+taxes:
 - ''
-- movies
-- music
-- news
-- books
-government:
-- ''
-- taxes
-- dmv
-- tickets
 grocery store:
 - ''
-health:
+medical:
 - ''
 - doctor
 - pharmacy
-- hygene
-- gym
 - therapy
-home:
+- phsical therapy
+memberships:
+- ''
+- gym
+- streaming
+- software
+personal care:
+- ''
+- hygene
+- haircut
+- relaxation
+housing:
 - ''
 - rent
-- utilities
-- home items
+utilities:
+- ''
+- phone
+- home
+- internet
 insurance:
 - ''
 - renters
@@ -41,22 +44,34 @@ lodging:
 - hotel
 shopping:
 - ''
-- music
+- gifts
+- music and production
 - sports
 - clothing
 - electronics
-- durables
-student loans:
+- home items
+- tools and hardware
+- entertainment media
+- education materials
+debt payments:
 - ''
 transportation:
 - ''
+- tickets
+- dmv
+- auto parts/maintenance
 - gas
+- parking
 - uber
 - public
 travel:
 - ''
 - airplane
-uncategorized:
+savings & invesment:
 - ''
+misc:
+- ''
+- fees
+- services
 ignore:
 - ''

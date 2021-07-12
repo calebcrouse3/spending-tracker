@@ -15,6 +15,10 @@ stop:
 	@docker stop spending-analysis
 	@docker rm spending-analysis
 
+data-setup:
+	@source ~/virtual_envs/ds3/bin/activate
+	@python3 utils.py
+
 backup:
 	@cat ./data/categorized/*.csv > ./data/backups/categorized_transactions_backup_`date +%Y%m%d`.csv
 

@@ -30,8 +30,6 @@ MINT_COLS = [
 def append_new_transactions(transact_file_path, new_file_path, subcols):
     """takes the current csv in folder and appends data from new file"""
 
-
-
     print("")
     print(f"updating: {transact_file_path}")
     print(f"using: {new_file_path}")

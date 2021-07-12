@@ -44,6 +44,12 @@ def load_raw_trans():
     #union together
     raw_trans = pd.concat([mint_df, amzn_df])
 
+    # get transaction in descending order
+    raw_trans["date"] = raw_trans["date"].apply(lambda x: pd.to_datetime(x))
+    raw_trans.sort_values("date", ascending = False, inplace = True)
+    raw_trans["date"] = raw_trans["date"].dt.strftime('%m/%d/%Y')
+    raw_trans.reset_index(inplace = True, drop = True)
+    
     return raw_trans
 
 
