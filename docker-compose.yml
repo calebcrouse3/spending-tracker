@@ -1,0 +1,31 @@
+version: "3"
+
+services:
+  data-setup:
+    build: ./data-setup
+    container_name: data-setup
+    volumes:
+      - ./data:/src/data
+      - ./data-setup:/src
+      - /Users/caleb.crouse/Downloads:/src/downloads
+    environment:
+      DOWNLOADS_FOLDER: downloads
+      PATH_TO_MINT_FOLDER: ./data/raw/mint/
+      PATH_TO_AMAZON_FOLDER: ./data/raw/amazon/
+      MASTER_TRANSACT_FILE_NAMES: transactions.csv
+
+  spending-tracker:
+    build: ./app
+    container_name: spending-tracker
+    ports:
+      - 8501:8501
+    volumes:
+      - ./data:/src/data
+      - ./app/:/src/app
+    depends_on:
+      - data-setup
+    environment:
+      PATH_TO_MINT_FOLDER: ./data/raw/mint/
+      PATH_TO_AMAZON_FOLDER: ./data/raw/amazon/
+      PATH_TO_CATEGORIZED: ./data/categorized/
+      MASTER_TRANSACT_FILE_NAMES: transactions.csv

@@ -39,6 +39,8 @@ identity_phrases:
 - T.J. MAXX
 - CHICK-FIL-A
 - BEARDED GOAT
+- exxon
+- Cvs
 phrase_maps:
 - description: transfer
   key_phrase: electronic funds transfer

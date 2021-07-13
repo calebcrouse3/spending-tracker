@@ -9,6 +9,11 @@ from SessionState import get_state
 from os import path
 from global_constants import *
 
+PATH_TO_MINT_FOLDER = os.environ.get("PATH_TO_MINT_FOLDER")
+PATH_TO_AMAZON_FOLDER = os.environ.get("PATH_TO_AMAZON_FOLDER")
+MASTER_TRANSACT_FILE_NAMES = os.environ.get("MASTER_TRANSACT_FILE_NAMES")
+PATH_TO_CATEGORIZED = os.environ.get("PATH_TO_CATEGORIZED") + MASTER_TRANSACT_FILE_NAMES
+
 st.set_page_config(layout="wide", page_title="Spending Tracker")
 
 ss = get_state()
@@ -49,7 +54,7 @@ def load_raw_trans():
     raw_trans.sort_values("date", ascending = False, inplace = True)
     raw_trans["date"] = raw_trans["date"].dt.strftime('%m/%d/%Y')
     raw_trans.reset_index(inplace = True, drop = True)
-    
+
     return raw_trans
 
 

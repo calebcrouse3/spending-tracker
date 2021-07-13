@@ -2,9 +2,13 @@ import re
 import os
 from os import path
 import shutil
-from app.global_constants import *
 import time
 import pandas as pd
+
+DOWNLOADS_FOLDER = os.environ.get("DOWNLOADS_FOLDER")
+PATH_TO_MINT_FOLDER = os.environ.get("PATH_TO_MINT_FOLDER")
+PATH_TO_AMAZON_FOLDER = os.environ.get("PATH_TO_AMAZON_FOLDER")
+MASTER_TRANSACT_FILE_NAMES = os.environ.get("MASTER_TRANSACT_FILE_NAMES")
 
 # using this subset of columns corrected with deduplication errors
 AMAZON_COLS = [
