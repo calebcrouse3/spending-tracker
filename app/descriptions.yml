@@ -41,6 +41,23 @@ identity_phrases:
 - BEARDED GOAT
 - exxon
 - Cvs
+- ATHLETICGREENS
+- GOLDS GYM
+- APPLE.COM/BILL
+- 'BP '
+- BP
+- DICKS SPORTING
+- CORE PHYSICAL THERAPY
+- PIZZA
+- HARBOR FREIGHT
+- STARBUCKS
+- Spotify
+- Hinge
+- CAVA MEZZE
+- BUTCHERBOX
+- BEAUTYCOUNTER
+- AUTOZONE
+- FOUR SEASONS GOLF
 phrase_maps:
 - description: transfer
   key_phrase: electronic funds transfer
@@ -68,3 +85,11 @@ phrase_maps:
   key_phrase: foreign exchange rate adjustment fee
 - description: PayMyRent
   key_phrase: turkson
+- description: Parking
+  key_phrase: METER PARKIN
+- description: advanced auto
+  key_phrase: ADVANCEAUTOPARTS
+- description: Dicks Sporting
+  key_phrase: S SPORTING
+- description: ADVANCED AUTO
+  key_phrase: ADVANCE AUTO
