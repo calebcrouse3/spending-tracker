@@ -1,22 +1,18 @@
-"""streamlit spending tracker app"""
+"""Streamlit spending tracker app."""
 
-
-import pandas as pd
-import streamlit as st
 import os
 import yaml
+import pandas as pd
+import streamlit as st
 from SessionState import get_state
 from os import path
-from global_constants import *
-
-PATH_TO_MINT_FOLDER = os.environ.get("PATH_TO_MINT_FOLDER")
-PATH_TO_AMAZON_FOLDER = os.environ.get("PATH_TO_AMAZON_FOLDER")
-MASTER_TRANSACT_FILE_NAMES = os.environ.get("MASTER_TRANSACT_FILE_NAMES")
-PATH_TO_CATEGORIZED = os.environ.get("PATH_TO_CATEGORIZED") + MASTER_TRANSACT_FILE_NAMES
+from data_setup import raw_data
+from common.constants import *
 
 st.set_page_config(layout="wide", page_title="Spending Tracker")
 
 ss = get_state()
+
 
 def load_mint_trans():
     # check that there is only one file in mint folder
@@ -37,8 +33,8 @@ def load_mint_trans():
         return group_df[RAW_TRANSACT_SCHEMA]
 
     else:
-        return None
         print("Mint folder needs attention!")
+        return None
 
 
 def load_raw_trans():
@@ -46,7 +42,7 @@ def load_raw_trans():
     mint_df = load_mint_trans()
     amzn_df = load_amzn_trans()
 
-    #union together
+    # union together
     raw_trans = pd.concat([mint_df, amzn_df])
 
     # get transaction in descending order
@@ -122,7 +118,7 @@ def lookup_description(original_description):
 
 
 def get_pretty_descriptions(original_descriptions):
-    descr_map = load_yaml(PATH_TO_DESCRIPTION_MAP)
+    descr_map = load_yaml(PATH_TO_DESCRIPTION_CONF)
     new_descriptions = []
     for orig in original_descriptions:
         new_descriptions.append(lookup_description(orig, descr_map))
@@ -131,10 +127,8 @@ def get_pretty_descriptions(original_descriptions):
 
 def load_catted_trans():
     if ss.catted_exists:
-        return pd.read_csv(PATH_TO_CATEGORIZED)
-    else:
-        return None
-
+        return pd.read_csv(PATH_TO_CATEGORIZED_TRANSACT + MASTER_TRANSACT_FILE_NAMES)
+    return None
 
 def save_categorized_transactions():
     batch_paths = [x for x in os.listdir(PATH_TO_CATEGORIZED) if x[-4:] == ".csv"]
@@ -146,7 +140,6 @@ def save_categorized_transactions():
     next_batch_name = f"batch_{str(max_batch+1)}.csv"
     add_header = max_batch == -1
     df.to_csv(PATH_TO_CATEGORIZED + next_batch_name, index=False, header=add_header)
-
 
 
 def get_uncatted_trans():
@@ -183,7 +176,6 @@ def lookup_category(descr):
         return 0, 0
 
 
-
 def update_descr_maps(rule_txt, rule_type):
     """adds the new description to ss and overwrites yamls"""
 
@@ -201,7 +193,7 @@ def update_descr_maps(rule_txt, rule_type):
         ss.descr["phrase_maps"] += [new_phrase]
 
     # overwrite yaml file with updated state
-    with open(PATH_TO_DESCRIPTION_MAP, "w") as f:
+    with open(PATH_TO_DESCRIPTION_CONF, "w") as f:
         yaml.dump(ss.descr, f)
 
 
@@ -329,6 +321,7 @@ def display_trends():
 
 def home_page():
     _navbar()
+    st.write(os.listdir("."))
     st.write("Welcome to your spending tracker!")
 
 
@@ -339,6 +332,8 @@ def _navbar() -> None:
     home_button = cols[0].button("Home")
     catz_button = cols[1].button("Categorize")
     trends_button = cols[2].button("Trends")
+    cat_df = cols[3].button("df-categorized")
+    uncat_df = cols[4].button("df-uncategorized")
 
     if home_button:
         ss.page = "home"
@@ -346,6 +341,10 @@ def _navbar() -> None:
         ss.page = "categorize"
     if trends_button:
         ss.page = "trends"
+    if cat_df:
+        ss.page = "df-categorized"
+    if uncat_df:
+        ss.page = "df-uncategorized"
 
     st.markdown("---")
 
@@ -383,23 +382,23 @@ def get_descr_cat_map():
     return descript_cat_map
 
 
-def _main() -> None:
+def main() -> None:
 
     reinit = st.button("re-init")
 
     # it session state not initialized, intialize data frames in session state
-    if ss.initialized == None or reinit:
+    if not ss.initialized or reinit:
+        ss.update_logs = raw_data.update()
         ss.page = "home"
         ss.initialized = True
         ss.raw_trans_df = load_raw_trans()
-        ss.catted_exists = path.exists(PATH_TO_CATEGORIZED)
+        ss.catted_exists = os.path.exists(PATH_TO_CATEGORIZED_TRANSACT)
         ss.catted_trans_df = load_catted_trans()
         ss.uncatted_trans_df = get_uncatted_trans()
-        ss.cats = load_yaml(PATH_TO_CATS)
-        ss.descr = load_yaml(PATH_TO_DESCRIPTION_MAP)
+        ss.cats = load_yaml(PATH_TO_CATEGORIES_CONF)
+        ss.descr = load_yaml(PATH_TO_DESCRIPTION_CONF)
         ss.descr_cat_map = get_descr_cat_map()
         ss.raw_trans_df = None
-
 
     if ss.page == "home":
         home_page()
@@ -410,8 +409,23 @@ def _main() -> None:
     elif ss.page == "trends":
         display_trends()
 
+    elif ss.page == "df-categorized":
+        _navbar()
+        st.text("categorized")
+        st.write(ss.catted_trans_df)
+
+    elif ss.page == "df-uncategorized":
+        _navbar()
+        st.text("uncategorized")
+        st.write(ss.uncatted_trans_df)
+
+    elif ss.page == "update-logs":
+        _navbar()
+        st.text("update-logs")
+        st.write(ss.update_logs)
+
     ss.sync()
 
 
 if __name__ == "__main__":
-    _main()
+    main()

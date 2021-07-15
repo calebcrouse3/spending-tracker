@@ -1,5 +1,5 @@
-/data/*
-.ipynb_checkpoints
+/src/data/*
+src/jupyter/.ipynb_checkpoints
 .DS_store
 __pycache__
 *.py[cod]

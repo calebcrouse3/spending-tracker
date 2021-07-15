@@ -1,15 +1,20 @@
 build:
-	@docker-compose pull
-	@docker-compose build
+	@docker build -t spending-tracker .
+
 
 start:
-	@docker-compose up data-setup
-	@docker-compose up --detach spending-tracker
-	@echo
+	@docker run -d \
+	    -p 8501:8501 \
+		-v $(PWD)/src:/src \
+		-v /Users/caleb.crouse/Downloads:/src/data/downloads \
+		--name spending-tracker \
+		spending-tracker
+	@open http://localhost:8501
 	@echo http://localhost:8501
 
 stop:
-	@docker-compose down --remove-orphans
+	@docker stop spending-tracker
+	@docker rm spending-tracker
 
 backup:
 	@cat ./data/categorized/*.csv > ./data/backups/categorized_transactions_backup_`date +%Y%m%d`.csv
