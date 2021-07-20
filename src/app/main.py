@@ -4,8 +4,8 @@ import yaml
 import pandas as pd
 import streamlit as st
 from SessionState import get_state
-from os import path
-from data_setup import raw_data
+from data_setup.raw_data import update as _update_raw_data
+from data_loader import load_raw_trans, load_catted_trans
 from common.constants import *
 
 st.set_page_config(layout="wide", page_title="Spending Tracker")
@@ -43,6 +43,10 @@ def get_pretty_descriptions(original_descriptions):
     for orig in original_descriptions:
         new_descriptions.append(lookup_description(orig, descr_map))
     return new_descriptions
+
+
+def get_transact_keys(df):
+    return df[TRANSACT_KEY_COLS].drop_duplicates()
 
 
 def get_uncatted_trans():
@@ -219,7 +223,6 @@ def display_trends():
 
 def home_page():
     _navbar()
-    st.write(os.listdir("."))
     st.write("Welcome to your spending tracker!")
 
 
@@ -230,19 +233,30 @@ def _navbar() -> None:
     home_button = cols[0].button("Home")
     catz_button = cols[1].button("Categorize")
     trends_button = cols[2].button("Trends")
-    cat_df = cols[3].button("df-categorized")
-    uncat_df = cols[4].button("df-uncategorized")
+    debug = cols[7].checkbox("debug-mode")
+
+    if debug:
+        cat_df = cols[3].button("df-categorized")
+        uncat_df = cols[4].button("df-uncategorized")
+        update_logs = cols[5].button("update-logs")
+        reinit = cols[6].button("re-init")
+
+        if cat_df:
+            ss.page = "df-categorized"
+        elif uncat_df:
+            ss.page = "df-uncategorized"
+        elif update_logs:
+            ss.page = "update-logs"
+
+        if reinit:
+            initialize()
 
     if home_button:
         ss.page = "home"
-    if catz_button:
+    elif catz_button:
         ss.page = "categorize"
-    if trends_button:
+    elif trends_button:
         ss.page = "trends"
-    if cat_df:
-        ss.page = "df-categorized"
-    if uncat_df:
-        ss.page = "df-uncategorized"
 
     st.markdown("---")
 
@@ -280,23 +294,25 @@ def get_descr_cat_map():
     return descript_cat_map
 
 
+def initialize() -> None:
+    ss.update_logs = _update_raw_data()
+    ss.page = "home"
+    ss.initialized = True
+    ss.raw_trans_df = load_raw_trans()
+    ss.catted_exists = os.path.exists(PATH_TO_CATEGORIZED_TRANSACT)
+    ss.catted_trans_df = load_catted_trans(ss.catted_exists)
+    ss.uncatted_trans_df = get_uncatted_trans()
+    ss.cats = load_yaml(PATH_TO_CATEGORIES_CONF)
+    ss.descr = load_yaml(PATH_TO_DESCRIPTION_CONF)
+    ss.descr_cat_map = get_descr_cat_map()
+    ss.raw_trans_df = None
+
+
 def main() -> None:
 
-    reinit = st.button("re-init")
-
     # it session state not initialized, intialize data frames in session state
-    if not ss.initialized or reinit:
-        ss.update_logs = raw_data.update()
-        ss.page = "home"
-        ss.initialized = True
-        ss.raw_trans_df = load_raw_trans()
-        ss.catted_exists = os.path.exists(PATH_TO_CATEGORIZED_TRANSACT)
-        ss.catted_trans_df = load_catted_trans()
-        ss.uncatted_trans_df = get_uncatted_trans()
-        ss.cats = load_yaml(PATH_TO_CATEGORIES_CONF)
-        ss.descr = load_yaml(PATH_TO_DESCRIPTION_CONF)
-        ss.descr_cat_map = get_descr_cat_map()
-        ss.raw_trans_df = None
+    if not ss.initialized:
+        initialize()
 
     if ss.page == "home":
         home_page()

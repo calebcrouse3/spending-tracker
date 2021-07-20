@@ -10,6 +10,3 @@ def to_snake(txt):
     words = txt.lower().split(" ")
     return "_".join(words)
 
-
-def get_transact_keys(df):
-    return df[TRANSACT_KEY_COLS].drop_duplicates()

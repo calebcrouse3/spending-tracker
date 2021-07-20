@@ -1,86 +1,67 @@
 import os
 import pandas as pd
+from utils import to_snake
 from common.constants import *
 
 
-def load_mint_transact() -> pd.DataFrame:
-    # check that there is only one file in mint folder
-    mint_files = os.listdir(PATH_TO_MINT_FOLDER)
+def load_mint_trans() -> pd.DataFrame:
+    """Load raw mint transactions"""
+    assert os.path.exists(PATH_TO_MINT)
 
-    if len(mint_files) == 1:
-        df = pd.read_csv(PATH_TO_MINT_FOLDER + mint_files[0])
-        df.columns = [to_snake(col) for col in df.columns]
+    df = pd.read_csv(PATH_TO_MINT)
+    df.columns = [to_snake(col) for col in df.columns]
 
-        # remove repeated white space characters
-        df['original_description'] = df['original_description'].apply(lambda txt: ' '.join(txt.split()))
+    # remove repeated white space characters
+    df['original_description'] = df['original_description'].apply(lambda txt: ' '.join(txt.split()))
 
-        # group by all values to aggregate duplicate transactions
-        group_df = df.groupby([
-            "date",
-            "original_description",
-            "transaction_type",
-            "account_name"],
-            as_index=False
-        ).amount.sum()
+    # group by all values to aggregate duplicate transactions
+    group_keys = RAW_TRANSACT_SCHEMA.copy()
+    group_keys.remove("amount")
+    group_df = df.groupby(group_keys, as_index=False).amount.sum()
 
-        group_df["amount"] = group_df["amount"].round(2)
+    # TODO extra step to remove amazon transactions
+    group_df["amount"] = group_df["amount"].round(2)
 
-        return group_df[RAW_TRANSACT_SCHEMA]
-
-    else:
-        print("Mint folder needs attention!")
+    return group_df[RAW_TRANSACT_SCHEMA]
 
 
-def load_amazon_transact() -> pd.DataFrame:
-    # check that there is only one file in mint folder
-    amzn_files = os.listdir(PATH_TO_AMAZON_FOLDER)
+def load_amazon_trans() -> pd.DataFrame:
+    """Load raw amazon transactions"""
+    assert os.path.exists(PATH_TO_AMAZON)
 
-    if len(amzn_files) == 1:
-        df = pd.read_csv(PATH_TO_AMAZON_FOLDER + amzn_files[0])
-        df.columns = [to_snake(col) for col in df.columns]
-        df["original_description"] = ("AMZN: " + df["title"] + " " + df["category"]).fillna("AMZN: unknown item / return")
-        df["account_name"] = "AMAZON"
-        df["amount"] = df["item_total"].apply(lambda x: float(x.replace("$", "")))
-        df["transaction_type"] = "debit"
-        df.rename(columns={"order_date": "date"}, inplace=True)
+    df = pd.read_csv(PATH_TO_AMAZON)
+    df.columns = [to_snake(col) for col in df.columns]
+    df["original_description"] = f"AMZN: {df['title']}. {df['category']}"
+    df["original_description"] = df["original_description"].fillna("AMZN: unknown/return")
+    df["account_name"] = "AMAZON"
+    df["amount"] = df["item_total"].apply(lambda x: float(x.replace("$", "")))
+    df["transaction_type"] = "debit"
+    df.rename(columns={"order_date": "date"}, inplace=True)
 
-        return df[RAW_TRANSACT_SCHEMA]
-
-    else:
-        print("Amazon folder needs attention!")
-        return None
+    return df[RAW_TRANSACT_SCHEMA]
 
 
 def load_raw_trans() -> pd.DataFrame:
-    # load individual sources of raw transactions
-    mint_df = load_mint_transact()
-    amzn_df = load_amazon_transact()
+    """Loadd all raw transactions and combine them"""
+    mint_df = load_mint_trans()
+    amzn_df = load_amazon_trans()
 
     # union together
     raw_trans = pd.concat([mint_df, amzn_df])
 
     # get transaction in descending order
     raw_trans["date"] = raw_trans["date"].apply(lambda x: pd.to_datetime(x))
-    raw_trans.sort_values("date", ascending = False, inplace = True)
+    raw_trans.sort_values("date", ascending=False, inplace=True)
+
+    # after sorting, convert date back to readable form
     raw_trans["date"] = raw_trans["date"].dt.strftime('%m/%d/%Y')
-    raw_trans.reset_index(inplace = True, drop = True)
+    raw_trans.reset_index(inplace=True, drop=True)
+    raw_trans.drop_duplicates(inplace=True)
 
     return raw_trans
 
 
-def load_catted_transact():
-    if ss.catted_exists:
-        return pd.read_csv(PATH_TO_CATEGORIZED_TRANSACT + MASTER_TRANSACT_FILE_NAMES)
-    return None
-
-
-def save_categorized_transactions():
-    batch_paths = [x for x in os.listdir(PATH_TO_CATEGORIZED) if x[-4:] == ".csv"]
-    max_batch = (
-        -1
-        if len(batch_paths) == 0
-        else max([int(x.split("_")[1].replace(".csv", "")) for x in batch_paths])
-    )
-    next_batch_name = f"batch_{str(max_batch+1)}.csv"
-    add_header = max_batch == -1
-    df.to_csv(PATH_TO_CATEGORIZED + next_batch_name, index=False, header=add_header)
+def load_catted_trans(catted_exists):
+    """Load categorized transactions"""
+    if catted_exists:
+        return pd.read_csv(PATH_TO_CATEGORIZED_TRANSACT)
