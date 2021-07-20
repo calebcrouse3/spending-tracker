@@ -16,14 +16,13 @@ medical:
 - pharmacy
 - therapy
 - phsical therapy
-memberships:
+subscriptions & memberships:
 - ''
 - gym
 - streaming
-- software
-personal care:
+- apps & software
+services:
 - ''
-- hygene
 - haircut
 - relaxation
 housing:
@@ -44,22 +43,22 @@ lodging:
 - hotel
 shopping:
 - ''
+- hygene
 - gifts
-- music and production
+- music gear
 - sports
 - clothing
 - electronics
 - home items
 - tools and hardware
-- entertainment media
-- education materials
+- bools & education
 debt payments:
 - ''
 transportation:
 - ''
 - tickets
 - dmv
-- auto parts/maintenance
+- auto parts & maintenance
 - gas
 - parking
 - uber
@@ -71,7 +70,5 @@ savings & invesment:
 - ''
 misc:
 - ''
-- fees
-- services
 ignore:
 - ''

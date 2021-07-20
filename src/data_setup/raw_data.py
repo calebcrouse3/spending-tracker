@@ -22,16 +22,16 @@ def _update_raw_transactions_file(transact_file_path, new_file_path, subcols) ->
 
         curr_df = pd.read_csv(transact_file_path)[subcols]
         concat_dfs = pd.concat([curr_df, new_df])[subcols]
-        concat_dfs.drop_duplicates(inplace = True)
+        concat_dfs.drop_duplicates(inplace=True)
 
         logs += f"\nNew transactions: {len(concat_dfs) - len(curr_df)}. Total: {len(concat_dfs)}"
 
         # overwrite with updated transactions
-        concat_dfs.to_csv(transact_file_path, index = False)
+        concat_dfs.to_csv(transact_file_path, index=False)
 
     else:
         # save new file as raw transactions
-        new_df.to_csv(transact_file_path, index = False)
+        new_df.to_csv(transact_file_path, index=False)
         logs += f"\nNo existing transactions. Total: {len(new_df)}"
 
     return logs

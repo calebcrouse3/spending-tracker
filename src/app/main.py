@@ -1,5 +1,4 @@
 """Streamlit spending tracker app."""
-
 import os
 import yaml
 import pandas as pd
@@ -12,85 +11,6 @@ from common.constants import *
 st.set_page_config(layout="wide", page_title="Spending Tracker")
 
 ss = get_state()
-
-
-def load_mint_trans():
-    # check that there is only one file in mint folder
-    mint_files = os.listdir(PATH_TO_MINT_FOLDER)
-
-    if len(mint_files) == 1:
-        df = pd.read_csv(PATH_TO_MINT_FOLDER + mint_files[0])
-        df.columns = [to_snake(col) for col in df.columns]
-
-        # remove repeated white space characters
-        df['original_description'] = df['original_description'].apply(lambda txt: ' '.join(txt.split()))
-
-        # group by all values to aggregate duplicate transactions
-        group_df = df.groupby(["date", "original_description", "transaction_type", "account_name"], as_index = False).amount.sum()
-
-        group_df["amount"] = group_df["amount"].round(2)
-
-        return group_df[RAW_TRANSACT_SCHEMA]
-
-    else:
-        print("Mint folder needs attention!")
-        return None
-
-
-def load_raw_trans():
-    # load individual sources of raw transactions
-    mint_df = load_mint_trans()
-    amzn_df = load_amzn_trans()
-
-    # union together
-    raw_trans = pd.concat([mint_df, amzn_df])
-
-    # get transaction in descending order
-    raw_trans["date"] = raw_trans["date"].apply(lambda x: pd.to_datetime(x))
-    raw_trans.sort_values("date", ascending = False, inplace = True)
-    raw_trans["date"] = raw_trans["date"].dt.strftime('%m/%d/%Y')
-    raw_trans.reset_index(inplace = True, drop = True)
-
-    return raw_trans
-
-
-def load_amzn_trans():
-    # check that there is only one file in mint folder
-    amzn_files = os.listdir(PATH_TO_AMAZON_FOLDER)
-
-    if len(amzn_files) == 1:
-        df = pd.read_csv(PATH_TO_AMAZON_FOLDER + amzn_files[0])
-        df.columns = [to_snake(col) for col in df.columns]
-        df["original_description"] = ("AMZN: " + df["title"] + " " + df["category"]).fillna("AMZN: unknown item / return")
-        df["account_name"] = "AMAZON"
-        df["amount"] = df["item_total"].apply(lambda x: float(x.replace("$", "")))
-        df["transaction_type"] = "debit"
-        df.rename(columns =
-                  {"order_date": "date",
-                  }, inplace = True)
-
-        return df[RAW_TRANSACT_SCHEMA]
-
-    else:
-        return None
-        print("Amazon folder needs attention!")
-
-
-def load_yaml(path):
-    with open(path, "r") as stream:
-        try:
-            return yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            print(exc)
-
-
-def to_snake(txt):
-    words = txt.lower().split(" ")
-    return "_".join(words)
-
-
-def get_transact_keys(df):
-    return df[TRANSACT_KEY_COLS].drop_duplicates()
 
 
 def lookup_description(original_description):
@@ -123,23 +43,6 @@ def get_pretty_descriptions(original_descriptions):
     for orig in original_descriptions:
         new_descriptions.append(lookup_description(orig, descr_map))
     return new_descriptions
-
-
-def load_catted_trans():
-    if ss.catted_exists:
-        return pd.read_csv(PATH_TO_CATEGORIZED_TRANSACT + MASTER_TRANSACT_FILE_NAMES)
-    return None
-
-def save_categorized_transactions():
-    batch_paths = [x for x in os.listdir(PATH_TO_CATEGORIZED) if x[-4:] == ".csv"]
-    max_batch = (
-        -1
-        if len(batch_paths) == 0
-        else max([int(x.split("_")[1].replace(".csv", "")) for x in batch_paths])
-    )
-    next_batch_name = f"batch_{str(max_batch+1)}.csv"
-    add_header = max_batch == -1
-    df.to_csv(PATH_TO_CATEGORIZED + next_batch_name, index=False, header=add_header)
 
 
 def get_uncatted_trans():
@@ -197,7 +100,6 @@ def update_descr_maps(rule_txt, rule_type):
         yaml.dump(ss.descr, f)
 
 
-
 def descr_adder_wigit():
     cols = st.beta_columns((3, 1, 10))
     descr_rule_def = cols[0].text_input("New Description Rule")
@@ -210,9 +112,6 @@ def descr_adder_wigit():
     if apply_descript_rule:
         rule_type = "phrase_map" if ":" in descr_rule_def else "identity"
         update_descr_maps(descr_rule_def, rule_type)
-
-
-
 
 
 def categorized_transactions():
@@ -294,12 +193,11 @@ def categorized_transactions():
             ss.catted_trans_df = uncatted_batch[CATEGORIZED_TRANSACT_SCHEMA]
             ss.catted_exists = True
 
-
         # remove categorized transactions from uncategorized
         ss.uncatted_trans_df = ss.uncatted_trans_df.drop(batch_indicies)
 
         # overwrite file with saved transactions
-        ss.catted_trans_df.to_csv(PATH_TO_CATEGORIZED, index = False)
+        ss.catted_trans_df.to_csv(PATH_TO_CATEGORIZED, index=False)
 
         # update description categoryo map
         ss.descr_cat_map = get_descr_cat_map()
