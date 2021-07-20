@@ -3,3 +3,5 @@ src/jupyter/.ipynb_checkpoints
 .DS_store
 __pycache__
 *.py[cod]
+.idea
+.idea/

@@ -13,6 +13,9 @@
     <option name="namespacePackageFolders">
       <list>
         <option value="$MODULE_DIR$/src/data_setup" />
+        <option value="$MODULE_DIR$/src/app" />
+        <option value="$MODULE_DIR$/src/common" />
+        <option value="$MODULE_DIR$/src/jupyter" />
       </list>
     </option>
   </component>
