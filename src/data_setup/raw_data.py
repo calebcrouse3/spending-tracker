@@ -9,10 +9,10 @@ from data_setup.mint_plugin import get_latest_mint_filename, MINT_SCHEMA
 
 
 def _update_raw_transactions_file(transact_file_path, new_file_path, subcols) -> str:
-    """takes the current csv in folder and appends data from new file"""
+    """takes the current csv in folder and new appends data from files in downloads"""
 
-    logs = f"\nupdating: {transact_file_path}"
-    logs += f"\nusing: {new_file_path}"
+    logs = f"\n\nupdating: {transact_file_path}"
+    logs += f"\n\nusing: {new_file_path}"
 
     new_df = pd.read_csv(new_file_path)[subcols]
     new_df.drop_duplicates(inplace=True)
@@ -24,7 +24,7 @@ def _update_raw_transactions_file(transact_file_path, new_file_path, subcols) ->
         concat_dfs = pd.concat([curr_df, new_df])[subcols]
         concat_dfs.drop_duplicates(inplace=True)
 
-        logs += f"\nNew transactions: {len(concat_dfs) - len(curr_df)}. Total: {len(concat_dfs)}"
+        logs += f"\n\nNew transactions: {len(concat_dfs) - len(curr_df)}. Total: {len(concat_dfs)}"
 
         # overwrite with updated transactions
         concat_dfs.to_csv(transact_file_path, index=False)
@@ -32,15 +32,15 @@ def _update_raw_transactions_file(transact_file_path, new_file_path, subcols) ->
     else:
         # save new file as raw transactions
         new_df.to_csv(transact_file_path, index=False)
-        logs += f"\nNo existing transactions. Total: {len(new_df)}"
+        logs += f"\n\nNo existing transactions. Total: {len(new_df)}"
 
-    return logs
+    return logs + "\n\n" + "-" * 20
 
 
 def update() -> str:
     downloads = os.listdir(PATH_TO_DOWNLOADS)
 
-    logs = "\n\nUpdating mint records"
+    logs = "\n\nUpdating mint records".upper()
 
     # get the filename of the most recent mint download
     mint_filename = get_latest_mint_filename(downloads)
