@@ -51,7 +51,6 @@ def update() -> str:
     # get all the filenames of amazon order reports
     amazon_filenames = get_amazon_filenames(downloads)
     for file in amazon_filenames:
-        time.sleep(2)
         logs += _update_raw_transactions_file(PATH_TO_AMAZON, PATH_TO_DOWNLOADS + file, AMAZON_SCHEMA)
 
     return logs

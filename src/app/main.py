@@ -3,10 +3,11 @@ import os
 import yaml
 import pandas as pd
 import streamlit as st
+import datetime
 from SessionState import get_state
 from data_setup.raw_data import update as _update_raw_data
 from data_loader import load_raw_trans, load_catted_trans
-from utils import to_snake, load_yaml
+from app.utils import to_snake, load_yaml, save_yaml, sort_cats
 from common.constants import *
 
 st.set_page_config(layout="wide", page_title="Spending Tracker")
@@ -98,44 +99,51 @@ def update_descr_conf(rule_txt, rule_type):
         ss.descr["phrase_maps"] += [new_phrase]
 
     # overwrite yaml file with updated state
-    with open(PATH_TO_DESCRIPTION_CONF, "w") as f:
-        yaml.dump(ss.descr, f)
-
-
-def descr_adder():
-    """creates streamlit widgit to add new descriptions"""
-    cols = st.beta_columns((3, 1, 10))
-    descr_rule_def = cols[0].text_input("New Description Rule")
-    cols[1].markdown("")
-    cols[1].markdown("")
-    apply_descript_rule = cols[1].button("Apply")
-    st.markdown("")
-
-    # if button clicked
-    if apply_descript_rule:
-        rule_type = "phrase_map" if ":" in descr_rule_def else "identity"
-        update_descr_conf(descr_rule_def, rule_type)
+    save_yaml(PATH_TO_DESCRIPTION_CONF, ss.descr)
 
 
 def categorized_trans():
     """categorize a batch of new transactions and append them to categorized"""
     _navbar()
 
-    # get total number of uncategorized transactions
-    n_uncatted = len(ss.uncatted_trans_df)
+    # columns for title and wigits
+    wigit_cols = st.beta_columns((10, 3, 3, 3))
 
-    st.title(f"You have {n_uncatted} uncategorized transactions")
+    # description rule adder wigit
+    descr_rule_def = wigit_cols[1].text_input("New Description Rule")
+    wigit_cols[2].markdown("")
+    wigit_cols[2].markdown("")
+    apply_descript_rule = wigit_cols[2].button("Apply")
+
+    # if desription apply button clicked
+    if apply_descript_rule:
+        rule_type = "phrase_map" if ":" in descr_rule_def else "identity"
+        update_descr_conf(descr_rule_def, rule_type)
+
+    # create wigit for min date selector
+    min_date = wigit_cols[3].date_input(
+        "minimum date",
+        datetime.date(2021, 1, 1))
+
+    # copy subset of uncategorized transactions after min_date
+    filtered_trans = ss.uncatted_trans_df.copy()
+    filtered_trans = filtered_trans[filtered_trans["date"] >= min_date]
+
+    # get total number of uncategorized transactions
+    n_uncatted = len(filtered_trans)
+
+    wigit_cols[0].title(f"You have {n_uncatted} uncategorized transactions")
     st.title("")
 
-    descr_adder()
-
+    # pluck off top n rows of uncatted trans
     batch_size = 5
-    batch_indicies = ss.uncatted_trans_df.index[0:batch_size]
-    uncatted_batch = ss.uncatted_trans_df.iloc[batch_indicies, :]
+    batch_indicies = filtered_trans.index[0:batch_size]
+    uncatted_batch = filtered_trans.iloc[batch_indicies, :]
 
+    # add pretty descriptions
     uncatted_batch["description"] = uncatted_batch["original_description"].apply(lambda x: lookup_description(x))
 
-    # get total number of columns needed to display data and wigits
+    # get total number of columns needed to display data and category selectors
     total_ncols = len(uncatted_batch.columns) + 2
 
     # headers for columns
@@ -148,7 +156,7 @@ def categorized_trans():
     header_cols[total_ncols - 2].markdown("CATEGORY")
     header_cols[total_ncols - 1].markdown("SUB CATEGORY")
 
-    # container for category values
+    # container for selected category values
     assigned_cats = ["None"] * batch_size
     assigned_subcats = ["None"] * batch_size
 
@@ -158,9 +166,10 @@ def categorized_trans():
         for i in range(len(row.values)):
             value_cols[i].text(row.values[i])
 
-        # get suggested categoies based on this description
+        # get index in cats dictionary of suggested categoies based on this description
         sugg_cat, sugg_subcat = lookup_category(row["description"])
 
+        # create select box for category
         selected_category = value_cols[total_ncols - 2].selectbox(
             label="",
             options=list(ss.cats.keys()),
@@ -169,11 +178,12 @@ def categorized_trans():
         )
         assigned_cats[index] = selected_category
 
+        # create select box for subcategory with values based on selected category
         selected_subcategory = value_cols[total_ncols - 1].selectbox(
             label="",
             options=ss.cats[assigned_cats[index]],
             key=f"subcat_{index}",
-            index = sugg_subcat,
+            index=sugg_subcat,
         )
         assigned_subcats[index] = selected_subcategory
 
@@ -197,12 +207,13 @@ def categorized_trans():
             ss.catted_exists = True
 
         # remove categorized transactions from uncategorized
-        ss.uncatted_trans_df = ss.uncatted_trans_df.drop(batch_indicies)
+        ss.uncatted_trans_df.drop(batch_indicies, inplace=True)
 
         # overwrite file with saved transactions
-        ss.catted_trans_df.to_csv(PATH_TO_CATEGORIZED, index=False)
+        ss.catted_trans_df.to_csv(PATH_TO_CATEGORIZED_TRANSACT, index=False)
 
-        # update description categoryo map
+        # update description category map with new categorized transactions
+        # ensures that same descriptions in next batches will get cat and subcat suggestions
         ss.descr_cat_map = get_descr_cat_map()
 
 
@@ -253,6 +264,7 @@ def get_descr_cat_map():
 
 
 def initialize() -> None:
+    sort_cats()
     ss.update_logs = _update_raw_data()
     ss.page = "home"
     ss.initialized = True

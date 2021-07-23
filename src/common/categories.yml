@@ -1,75 +1,75 @@
 amusement & recreation:
 - ''
+debt payments:
+- ''
 eating & drinking out:
 - ''
+- bars
+- coffee shops
 - delivery
 - resturants
-- coffee shops
-- bars
-taxes:
-- ''
 grocery store:
 - ''
-medical:
-- ''
-- doctor
-- pharmacy
-- therapy
-- phsical therapy
-subscriptions & memberships:
-- ''
-- gym
-- streaming
-- apps & software
-services:
-- ''
-- haircut
-- relaxation
 housing:
 - ''
 - rent
-utilities:
+ignore:
 - ''
-- phone
-- home
-- internet
 insurance:
 - ''
-- renters
 - auto
+- renters
 lodging:
 - ''
 - airbnb
 - hotel
+medical:
+- ''
+- doctor
+- pharmacy
+- phsical therapy
+- therapy
+misc:
+- ''
+savings & invesment:
+- ''
+services:
+- ''
+- haircut
+- relaxation
 shopping:
 - ''
-- hygene
-- health
-- gifts
-- music gear
-- sports
+- bools & education
 - clothing
 - electronics
+- gifts
+- health
 - home items
+- hygene
+- music gear
+- sports
 - tools and hardware
-- bools & education
-debt payments:
+subscriptions & memberships:
+- ''
+- apps & software
+- gym
+- streaming
+taxes:
 - ''
 transportation:
 - ''
-- tickets
-- dmv
 - auto parts & maintenance
+- dmv
 - gas
 - parking
-- uber
 - public
+- tickets
+- uber
 travel:
 - ''
 - airplane
-savings & invesment:
+utilities:
 - ''
-misc:
-- ''
-ignore:
-- ''
+- home
+- internet
+- phone

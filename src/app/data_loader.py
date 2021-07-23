@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+from datetime import date
 from app.utils import to_snake
 from common.constants import *
 
@@ -58,11 +59,9 @@ def load_raw_trans() -> pd.DataFrame:
     raw_trans = pd.concat([mint_df, amzn_df])
 
     # get transaction in descending order
-    raw_trans["date"] = raw_trans["date"].apply(lambda x: pd.to_datetime(x))
+    raw_trans["date"] = raw_trans["date"].apply(lambda x: pd.to_datetime(x).date())
     raw_trans.sort_values("date", ascending=False, inplace=True)
 
-    # after sorting, convert date back to readable form
-    raw_trans["date"] = raw_trans["date"].dt.strftime('%m/%d/%Y')
     raw_trans.reset_index(inplace=True, drop=True)
     raw_trans.drop_duplicates(inplace=True)
 
