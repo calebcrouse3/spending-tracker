@@ -52,22 +52,21 @@ def get_transact_keys(df):
 def get_uncatted_trans():
     """return set of raw transactions which have not already been categorized"""
     if not ss.catted_exists:
-        return ss.raw_trans_df.reset_index(drop=True)
+        return ss.raw_trans_df.copy().reset_index(drop=True)
     else:
         categorized_keys = get_transact_keys(ss.catted_trans_df)
         categorized_keys.columns = ["cat_" + col for col in categorized_keys.columns]
-        st.write(categorized_keys.head())
+
         join_categorized = ss.raw_trans_df.merge(
             categorized_keys,
             left_on=TRANSACT_KEY_COLS,
             right_on=list(categorized_keys.columns),
             how="left",
         )
-        st.write(join_categorized.head())
+
         uncategorized_df = join_categorized[join_categorized[categorized_keys.columns[0]].isna()].drop(
             categorized_keys.columns, axis=1
         )
-        st.write(uncategorized_df.head())
         return uncategorized_df[RAW_TRANSACT_SCHEMA].reset_index(drop=True)
 
 
@@ -277,12 +276,12 @@ def initialize() -> None:
 
 def _navbar() -> None:
     """Display navbar."""
-    cols = st.beta_columns(8)
+    cols = st.beta_columns(10)
 
     home_button = cols[0].button("Home")
     catz_button = cols[1].button("Categorize")
     trends_button = cols[2].button("Trends")
-    debug = cols[7].checkbox("debug-mode")
+    debug = cols[9].checkbox("debug-mode")
 
     if debug:
         cat_df = cols[3].button("df-categorized")

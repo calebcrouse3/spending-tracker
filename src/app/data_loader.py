@@ -74,4 +74,7 @@ def load_raw_trans() -> pd.DataFrame:
 def load_catted_trans(catted_exists):
     """Load categorized transactions"""
     if catted_exists:
-        return pd.read_csv(PATH_TO_CATEGORIZED_TRANSACT)
+        df = pd.read_csv(PATH_TO_CATEGORIZED_TRANSACT)
+        # cast date to datetime so it can join to date for raw trans in order to get uncatted trans
+        df["date"] = df["date"].apply(lambda x: pd.to_datetime(x).date())
+        return df

@@ -12,7 +12,7 @@ CATEGORIZED_TRANSACT_SCHEMA = RAW_TRANSACT_SCHEMA + [
     "subcategory",
 ]
 
-TRANSACT_KEY_COLS = ["date", "original_description", "amount"]
+TRANSACT_KEY_COLS = ["date", "original_description"]
 
 MASTER_TRANSACT_FILE_NAMES = "transactions.csv"
 
@@ -31,4 +31,3 @@ PATH_TO_DOWNLOADS = "/src/data/downloads/"
 MIN_YEAR = 2020
 MIN_MONTH = 6
 MIN_DAY = 1
-
