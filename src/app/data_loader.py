@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import datetime
 from datetime import date
 from app.utils import to_snake
 from common.constants import *
@@ -51,7 +52,7 @@ def load_amazon_trans() -> pd.DataFrame:
 
 
 def load_raw_trans() -> pd.DataFrame:
-    """Loadd all raw transactions and combine them"""
+    """Load all raw transactions and combine them"""
     mint_df = load_mint_trans()
     amzn_df = load_amazon_trans()
 
@@ -60,12 +61,14 @@ def load_raw_trans() -> pd.DataFrame:
 
     # get transaction in descending order
     raw_trans["date"] = raw_trans["date"].apply(lambda x: pd.to_datetime(x).date())
-    raw_trans.sort_values("date", ascending=False, inplace=True)
+    min_trans_date = datetime.date(MIN_YEAR, MIN_MONTH, MIN_DAY)
+    filtered_trans = raw_trans[raw_trans["date"] >= min_trans_date]
+    filtered_trans.sort_values("date", ascending=False, inplace=True)
 
-    raw_trans.reset_index(inplace=True, drop=True)
-    raw_trans.drop_duplicates(inplace=True)
+    # filtered_trans.reset_index(inplace=True, drop=True)
+    filtered_trans.drop_duplicates(inplace=True)
 
-    return raw_trans
+    return filtered_trans
 
 
 def load_catted_trans(catted_exists):

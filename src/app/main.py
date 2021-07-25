@@ -52,19 +52,22 @@ def get_transact_keys(df):
 def get_uncatted_trans():
     """return set of raw transactions which have not already been categorized"""
     if not ss.catted_exists:
-        return ss.raw_trans_df
+        return ss.raw_trans_df.reset_index(drop=True)
     else:
         categorized_keys = get_transact_keys(ss.catted_trans_df)
         categorized_keys.columns = ["cat_" + col for col in categorized_keys.columns]
+        st.write(categorized_keys.head())
         join_categorized = ss.raw_trans_df.merge(
             categorized_keys,
             left_on=TRANSACT_KEY_COLS,
             right_on=list(categorized_keys.columns),
             how="left",
         )
+        st.write(join_categorized.head())
         uncategorized_df = join_categorized[join_categorized[categorized_keys.columns[0]].isna()].drop(
             categorized_keys.columns, axis=1
         )
+        st.write(uncategorized_df.head())
         return uncategorized_df[RAW_TRANSACT_SCHEMA].reset_index(drop=True)
 
 
@@ -120,25 +123,17 @@ def categorized_trans():
         rule_type = "phrase_map" if ":" in descr_rule_def else "identity"
         update_descr_conf(descr_rule_def, rule_type)
 
-    # create wigit for min date selector
-    min_date = wigit_cols[3].date_input(
-        "minimum date",
-        datetime.date(2021, 1, 1))
-
-    # copy subset of uncategorized transactions after min_date
-    filtered_trans = ss.uncatted_trans_df.copy()
-    filtered_trans = filtered_trans[filtered_trans["date"] >= min_date]
-
     # get total number of uncategorized transactions
-    n_uncatted = len(filtered_trans)
+    n_uncatted = len(ss.uncatted_trans_df)
 
     wigit_cols[0].title(f"You have {n_uncatted} uncategorized transactions")
     st.title("")
 
     # pluck off top n rows of uncatted trans
-    batch_size = 5
-    batch_indicies = filtered_trans.index[0:batch_size]
-    uncatted_batch = filtered_trans.iloc[batch_indicies, :]
+    desired_batch_size = 2
+    batch_size = desired_batch_size if desired_batch_size < n_uncatted else n_uncatted
+    batch_indicies = ss.uncatted_trans_df.index[0:batch_size]
+    uncatted_batch = ss.uncatted_trans_df.loc[batch_indicies, :]
 
     # add pretty descriptions
     uncatted_batch["description"] = uncatted_batch["original_description"].apply(lambda x: lookup_description(x))
@@ -206,10 +201,10 @@ def categorized_trans():
             ss.catted_trans_df = uncatted_batch[CATEGORIZED_TRANSACT_SCHEMA]
             ss.catted_exists = True
 
-        # remove categorized transactions from uncategorized
+        # remove categorized transactions from uncategorized transaction in memory
         ss.uncatted_trans_df.drop(batch_indicies, inplace=True)
 
-        # overwrite file with saved transactions
+        # overwrite file with saved transactions to persist categorizations to disk
         ss.catted_trans_df.to_csv(PATH_TO_CATEGORIZED_TRANSACT, index=False)
 
         # update description category map with new categorized transactions
@@ -225,6 +220,8 @@ def display_trends():
     st.write(ss.descr)
     st.text("descr_cats_map")
     st.write(ss.descr_cat_map)
+    st.text("catted_exists")
+    st.write(ss.catted_exists)
 
 
 def home_page():

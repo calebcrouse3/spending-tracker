@@ -28,3 +28,7 @@ PATH_TO_CATEGORIZED_TRANSACT = "/src/data/categorized/" + MASTER_TRANSACT_FILE_N
 
 PATH_TO_DOWNLOADS = "/src/data/downloads/"
 
+MIN_YEAR = 2020
+MIN_MONTH = 6
+MIN_DAY = 1
+
