@@ -20,8 +20,6 @@ income:
 - salary
 insurance:
 - ''
-- auto
-- renters
 lodging:
 - ''
 - airbnb
@@ -42,15 +40,14 @@ services:
 - relaxation
 shopping:
 - ''
-- bools & education
+- books & education
 - clothing
 - electronics
 - gifts
 - health and wellness
 - home items
-- hygene
 - music gear
-- sports
+- sporting
 - tools and hardware
 subscriptions & memberships:
 - ''

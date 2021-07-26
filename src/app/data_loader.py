@@ -21,15 +21,16 @@ def load_mint_trans() -> pd.DataFrame:
     group_keys.remove("amount")
     group_df = df.groupby(group_keys, as_index=False).amount.sum()
 
-    # remove amzn transactions
-    def is_amazon_trans(descr) -> bool:
-        substrings = ["amzn", "amazon"]
+    # remove amzn and auth transactions
+    # basically transactions we just want to ignore completely
+    def is_false_transaction(descr) -> bool:
+        substrings = ["amzn", "amazon", "auth :"]
         for s in substrings:
             if s in descr.lower():
                 return True
         return False
 
-    group_df = group_df[~group_df["original_description"].apply(is_amazon_trans)]
+    group_df = group_df[~group_df["original_description"].apply(is_false_transaction)]
     group_df["amount"] = group_df["amount"].round(2)
 
     return group_df[RAW_TRANSACT_SCHEMA]
@@ -41,7 +42,7 @@ def load_amazon_trans() -> pd.DataFrame:
 
     df = pd.read_csv(PATH_TO_AMAZON)
     df.columns = [to_snake(col) for col in df.columns]
-    df["original_description"] = df.apply(lambda row: row['title'], axis=1)
+    df["original_description"] = df.apply(lambda row: f"{row['title']} : AMZN", axis=1)
     df["original_description"] = df["original_description"].fillna("AMZN: unknown/return")
     df["account_name"] = "AMAZON"
     df["amount"] = df["item_total"].apply(lambda x: float(x.replace("$", "")))

@@ -129,7 +129,7 @@ def categorized_trans():
     st.title("")
 
     # pluck off top n rows of uncatted trans
-    desired_batch_size = 2
+    desired_batch_size = 5
     batch_size = desired_batch_size if desired_batch_size < n_uncatted else n_uncatted
     batch_indicies = ss.uncatted_trans_df.index[0:batch_size]
     uncatted_batch = ss.uncatted_trans_df.loc[batch_indicies, :]

@@ -56,6 +56,9 @@ identity_phrases:
 - BEAUTYCOUNTER
 - AUTOZONE
 - FOUR SEASONS GOLF
+- DUNKIN
+- JERSEY MIKES
+- REI
 phrase_maps:
 - description: transfer
   key_phrase: electronic funds transfer
@@ -91,5 +94,5 @@ phrase_maps:
   key_phrase: S SPORTING
 - description: ADVANCED AUTO
   key_phrase: ADVANCE AUTO
-- description: me
-  key_phrase: poop on
+- description: whole foods
+  key_phrase: wholefds

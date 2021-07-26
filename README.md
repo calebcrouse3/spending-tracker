@@ -24,7 +24,7 @@ schemas to expect from those data sources
 ### load_raw_data:
 loads and concats all the raw data, maps them to the transaction schema, groups amounts
 by date and transcription (fixes duplicate purchases at same venue on the same date, think drinks at the bar)
-and assigns this to raw transactions.
+and assigns this to raw transactions. All mint transactions with amazon, amzn, or auth :, in them, are removed.
 
 ### descriptions:
 Two types.
@@ -47,4 +47,5 @@ Is a map of pretty descriptions to categories and subcategories that is generate
 from the categorized data where the most popular categories for each pretty description is used
 
 ### TODO:
-- Check what happens when filtered_trans == 0. IE no more transactions to categorize or time selection after today
+- Module to make retroactive updates to categories. If change in category submitted through tool, retroactively update or remove descriptions from all effected transactions
+- visualizations
