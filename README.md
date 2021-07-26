@@ -47,5 +47,5 @@ Is a map of pretty descriptions to categories and subcategories that is generate
 from the categorized data where the most popular categories for each pretty description is used
 
 ### TODO:
-- Module to make retroactive updates to categories. If change in category submitted through tool, retroactively update or remove descriptions from all effected transactions
+- Category manager. Module to make retroactive updates to categories. If change in category submitted through tool, retroactively update or remove descriptions from all effected transactions, also update transactions file
 - visualizations
