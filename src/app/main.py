@@ -139,9 +139,10 @@ def categorized_trans():
 
     # get total number of columns needed to display data and category selectors
     total_ncols = len(uncatted_batch.columns) + 2
+    cols_spacing = total_ncols
 
     # headers for columns
-    header_cols = st.beta_columns(total_ncols)
+    header_cols = st.beta_columns(cols_spacing)
 
     # write column headers
     for i in range(len(uncatted_batch.columns)):
@@ -156,7 +157,7 @@ def categorized_trans():
 
     # write transaction info into grid
     for index, row in uncatted_batch.reset_index(drop=True).iterrows():
-        value_cols = st.beta_columns(total_ncols)
+        value_cols = st.beta_columns(cols_spacing)
         for i in range(len(row.values)):
             value_cols[i].text(row.values[i])
 

@@ -1,9 +1,9 @@
 RAW_TRANSACT_SCHEMA = [
     "date",
-    "original_description",
     "transaction_type",
     "amount",
     "account_name",
+    "original_description",
 ]
 
 CATEGORIZED_TRANSACT_SCHEMA = RAW_TRANSACT_SCHEMA + [
