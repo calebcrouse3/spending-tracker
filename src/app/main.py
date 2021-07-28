@@ -8,6 +8,7 @@ from SessionState import get_state
 from data_setup.raw_data import update as _update_raw_data
 from data_loader import load_raw_trans, load_catted_trans
 from app.utils import to_snake, load_yaml, save_yaml, sort_cats
+from category_manager import manager_page
 from common.constants import *
 
 st.set_page_config(layout="wide", page_title="Spending Tracker")
@@ -260,6 +261,15 @@ def get_descr_cat_map():
     return descr_cat_map
 
 
+def text_and_button(label):
+    cols = st.beta_columns(10)
+    txt = cols[0].text_input(label)
+    cols[1].markdown("")
+    cols[1].markdown("")
+    apply_it = cols[1].button("Apply")
+    return txt, apply_it
+
+
 def initialize() -> None:
     sort_cats()
     ss.update_logs = _update_raw_data()
@@ -282,13 +292,14 @@ def _navbar() -> None:
     home_button = cols[0].button("Home")
     catz_button = cols[1].button("Categorize")
     trends_button = cols[2].button("Trends")
+    manager_button = cols[3].button("Manager")
     debug = cols[9].checkbox("debug-mode")
 
     if debug:
-        cat_df = cols[3].button("df-categorized")
-        uncat_df = cols[4].button("df-uncategorized")
-        update_logs = cols[5].button("update-logs")
-        reinit = cols[6].button("re-init")
+        cat_df = cols[4].button("df-categorized")
+        uncat_df = cols[5].button("df-uncategorized")
+        update_logs = cols[6].button("update-logs")
+        reinit = cols[7].button("re-init")
 
         if cat_df:
             ss.page = "df-categorized"
@@ -306,6 +317,8 @@ def _navbar() -> None:
         ss.page = "categorize"
     elif trends_button:
         ss.page = "trends"
+    elif manager_button:
+        ss.page = "manager"
 
     st.markdown("---")
 
@@ -324,6 +337,10 @@ def main() -> None:
 
     elif ss.page == "trends":
         display_trends()
+
+    elif ss.page == "manager":
+        _navbar()
+        manager_page(ss)
 
     elif ss.page == "df-categorized":
         _navbar()
