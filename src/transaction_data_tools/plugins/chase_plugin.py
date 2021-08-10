@@ -53,4 +53,8 @@ def update(downloads) -> str:
 
 
 def load_trans() -> pd.DataFrame:
-    pass
+    assert path.exists(PATH_TO_CHASE)
+
+    df = pd.read_csv(PATH_TO_CHASE)
+    return df
+
