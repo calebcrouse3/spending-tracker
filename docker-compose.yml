@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+
+  jupyter:
+    build:
+      context: ./src/jupyter
+    container_name: jupyter
+    ports:
+      - 8888:8888
+    volumes:
+      - ./src/spending-tracker/:/home/jovyan/spending-tracker
+      - ./jupyter/notebooks:/home/jovyan/notebooks
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+
+  spending-tracker:
+    build:
+      context: ./src/spending-tracker
+    container_name: spending-tracker
+    ports:
+      - 8501:8501
+    volumes:
+      - /Users/caleb.crouse/Downloads:/src/data/downloads
+      - ./src/spending-tracker:/src

@@ -12,9 +12,9 @@
   <component name="PyNamespacePackagesService">
     <option name="namespacePackageFolders">
       <list>
-        <option value="$MODULE_DIR$/src/transaction_data_tools" />
-        <option value="$MODULE_DIR$/src/app" />
-        <option value="$MODULE_DIR$/src/common" />
+        <option value="$MODULE_DIR$/src/spending-tracker/transaction_data_tools" />
+        <option value="$MODULE_DIR$/src/spending-tracker/app" />
+        <option value="$MODULE_DIR$/src/spending-tracker/common" />
         <option value="$MODULE_DIR$/src/jupyter" />
       </list>
     </option>

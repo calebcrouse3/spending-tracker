@@ -1,20 +1,22 @@
 build:
-	@docker build -t spending-tracker .
+	@docker-compose pull
+	@docker-compose build
 
 
 start:
-	@docker run -d \
-	    -p 8501:8501 \
-		-v $(PWD)/src:/src \
-		-v /Users/caleb.crouse/Downloads:/src/data/downloads \
-		--name spending-tracker \
-		spending-tracker
-	@open http://localhost:8501
+	@docker-compose up --detach spending-tracker
 	@echo http://localhost:8501
+	@open http://localhost:8501
+
+
+jupyter-start:
+	@docker-compose up --detach jupyter
+	@sleep 5
+	@docker exec -it jupyter jupyter server list
+	@echo
 
 stop:
-	@docker stop spending-tracker
-	@docker rm spending-tracker
+	@docker-compose down --remove-orphans
 
 backup:
 	@cat ./data/categorized/*.csv > ./data/backups/categorized_transactions_backup_`date +%Y%m%d`.csv
