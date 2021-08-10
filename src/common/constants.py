@@ -20,13 +20,15 @@ PATH_TO_DESCRIPTION_CONF = "/src/common/descriptions.yml"
 
 PATH_TO_CATEGORIES_CONF = "/src/common/categories.yml"
 
-PATH_TO_MINT = "/src/data/raw/mint/" + MASTER_TRANSACT_FILE_NAMES
+PATH_TO_MINT = "/src/transaction_data/raw/mint/" + MASTER_TRANSACT_FILE_NAMES
 
-PATH_TO_AMAZON = "/src/data/raw/amazon/" + MASTER_TRANSACT_FILE_NAMES
+PATH_TO_CHASE = "/src/transaction_data/raw/chase/" + MASTER_TRANSACT_FILE_NAMES
 
-PATH_TO_CATEGORIZED_TRANSACT = "/src/data/categorized/" + MASTER_TRANSACT_FILE_NAMES
+PATH_TO_AMAZON = "/src/transaction_data/raw/amazon/" + MASTER_TRANSACT_FILE_NAMES
 
-PATH_TO_DOWNLOADS = "/src/data/downloads/"
+PATH_TO_CATEGORIZED_TRANSACT = "/src/transaction_data/categorized/" + MASTER_TRANSACT_FILE_NAMES
+
+PATH_TO_DOWNLOADS = "/src/transaction_data/downloads/"
 
 MIN_YEAR = 2020
 MIN_MONTH = 6

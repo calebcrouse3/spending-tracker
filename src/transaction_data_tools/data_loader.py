@@ -4,6 +4,7 @@ import datetime
 from datetime import date
 from app.utils import to_snake
 from common.constants import *
+from transaction_data_tools.plugins.amazon_plugin import load_trans as _load_amazon_trans
 
 
 def load_mint_trans() -> pd.DataFrame:
@@ -36,26 +37,10 @@ def load_mint_trans() -> pd.DataFrame:
     return group_df[RAW_TRANSACT_SCHEMA]
 
 
-def load_amazon_trans() -> pd.DataFrame:
-    """Load raw amazon transactions"""
-    assert os.path.exists(PATH_TO_AMAZON)
-
-    df = pd.read_csv(PATH_TO_AMAZON)
-    df.columns = [to_snake(col) for col in df.columns]
-    df["original_description"] = df.apply(lambda row: f"{row['title']} : AMZN", axis=1)
-    df["original_description"] = df["original_description"].fillna("AMZN: unknown/return")
-    df["account_name"] = "AMAZON"
-    df["amount"] = df["item_total"].apply(lambda x: float(x.replace("$", "")))
-    df["transaction_type"] = "debit"
-    df.rename(columns={"order_date": "date"}, inplace=True)
-
-    return df[RAW_TRANSACT_SCHEMA]
-
-
 def load_raw_trans() -> pd.DataFrame:
     """Load all raw transactions and combine them"""
     mint_df = load_mint_trans()
-    amzn_df = load_amazon_trans()
+    amzn_df = _load_amazon_trans()
 
     # union together
     raw_trans = pd.concat([mint_df, amzn_df])

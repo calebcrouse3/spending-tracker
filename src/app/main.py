@@ -1,13 +1,11 @@
 """Streamlit spending tracker app."""
 import os
-import yaml
 import pandas as pd
 import streamlit as st
-import datetime
 from SessionState import get_state
-from data_setup.raw_data import update as _update_raw_data
-from data_loader import load_raw_trans, load_catted_trans
-from app.utils import to_snake, load_yaml, save_yaml, sort_cats
+from transaction_data_tools.data_update import update as _update_raw_data
+from transaction_data_tools.data_loader import load_raw_trans, load_catted_trans
+from app.utils import load_yaml, save_yaml, sort_cats
 from category_manager import manager_page
 from common.constants import *
 
@@ -138,7 +136,7 @@ def categorized_trans():
     # add pretty descriptions
     uncatted_batch["description"] = uncatted_batch["original_description"].apply(lambda x: lookup_description(x))
 
-    # get total number of columns needed to display data and category selectors
+    # get total number of columns needed to display transaction_data and category selectors
     total_ncols = len(uncatted_batch.columns) + 2
     cols_spacing = total_ncols
 
@@ -325,7 +323,7 @@ def _navbar() -> None:
 
 def main() -> None:
 
-    # it session state not initialized, get all needed data into state
+    # it session state not initialized, get all needed transaction_data into state
     if not ss.initialized:
         initialize()
 

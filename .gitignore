@@ -1,4 +1,4 @@
-/src/data/*
+/src/transaction_data/*
 src/jupyter/.ipynb_checkpoints
 .DS_store
 __pycache__

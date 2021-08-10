@@ -9,8 +9,8 @@ from common.constants import *
 
 # takes a session state
 def manager_page(ss):
-    """TODO: this should take actions on the categorized data. This should also automatically
-    make a backup of the categorized data and maybe descriptions. This probably requires keeping a
+    """TODO: this should take actions on the categorized transaction_data. This should also automatically
+    make a backup of the categorized transaction_data and maybe descriptions. This probably requires keeping a
     separatre dictionary of the changes entered and then on saving to execute the changes there."""
 
     if not ss.temp_cats:
