@@ -26,6 +26,10 @@ PATH_TO_CHASE = "/src/transaction_data/raw/chase/" + MASTER_TRANSACT_FILE_NAMES
 
 PATH_TO_AMAZON = "/src/transaction_data/raw/amazon/" + MASTER_TRANSACT_FILE_NAMES
 
+PATH_TO_FIDELITY_REWARDS = "/src/transaction_data/raw/fidelity_rewards/" + MASTER_TRANSACT_FILE_NAMES
+
+PATH_TO_FIDELITY_CASH = "/src/transaction_data/raw/fidelity_cash/" + MASTER_TRANSACT_FILE_NAMES
+
 PATH_TO_CATEGORIZED_TRANSACT = "/src/transaction_data/categorized/" + MASTER_TRANSACT_FILE_NAMES
 
 PATH_TO_DOWNLOADS = "/src/transaction_data/downloads/"

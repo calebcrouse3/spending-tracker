@@ -4,8 +4,12 @@ from transaction_data_tools.plugins.amazon_plugin import update as _update_amazo
 from transaction_data_tools.plugins.chase_plugin import update as _update_chase
 
 
+def get_downloads() -> str:
+    return listdir(PATH_TO_DOWNLOADS)
+
+
 def update() -> str:
-    downloads = listdir(PATH_TO_DOWNLOADS)
+    downloads = get_downloads()
     amazon_logs = _update_amazon(downloads)
     chase_logs = _update_chase(downloads)
     return amazon_logs + chase_logs

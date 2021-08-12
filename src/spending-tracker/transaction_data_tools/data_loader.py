@@ -5,41 +5,12 @@ from datetime import date
 from app.utils import to_snake
 from common.constants import *
 from transaction_data_tools.plugins.amazon_plugin import load_trans as _load_amazon_trans
-
-
-def load_mint_trans() -> pd.DataFrame:
-    """Load raw mint transactions"""
-    assert os.path.exists(PATH_TO_MINT)
-
-    df = pd.read_csv(PATH_TO_MINT)
-    df.columns = [to_snake(col) for col in df.columns]
-
-    # remove repeated white space characters
-    df['original_description'] = df['original_description'].apply(lambda txt: ' '.join(txt.split()))
-
-    # group by all values to aggregate duplicate transactions
-    group_keys = RAW_TRANSACT_SCHEMA.copy()
-    group_keys.remove("amount")
-    group_df = df.groupby(group_keys, as_index=False).amount.sum()
-
-    # remove amzn and auth transactions
-    # basically transactions we just want to ignore completely
-    def is_false_transaction(descr) -> bool:
-        substrings = ["amzn", "amazon", "auth :"]
-        for s in substrings:
-            if s in descr.lower():
-                return True
-        return False
-
-    group_df = group_df[~group_df["original_description"].apply(is_false_transaction)]
-    group_df["amount"] = group_df["amount"].round(2)
-
-    return group_df[RAW_TRANSACT_SCHEMA]
+from transaction_data_tools.plugins.mint_plugin import load_trans as _load_mint_trans
 
 
 def load_raw_trans() -> pd.DataFrame:
     """Load all raw transactions and combine them"""
-    mint_df = load_mint_trans()
+    mint_df = _load_mint_trans()
     amzn_df = _load_amazon_trans()
 
     # union together

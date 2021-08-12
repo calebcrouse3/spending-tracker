@@ -1,5 +1,6 @@
 import re
 import pandas as pd
+from os import path
 from common.constants import *
 from datetime import datetime
 from app.utils import to_snake
@@ -53,8 +54,17 @@ def update(downloads) -> str:
 
 
 def load_trans() -> pd.DataFrame:
+    """Load chase transactions"""
     assert path.exists(PATH_TO_CHASE)
 
     df = pd.read_csv(PATH_TO_CHASE)
-    return df
+    df.columns = [to_snake(col) for col in df.columns]
+
+    df["date"] = df["posting_date"].apply(lambda x: pd.to_datetime(x).date())
+    df["original_description"] = df["description"]
+    df["amount"] = df["amount"].apply(abs)
+    df["transaction_type"] = df["details"].apply(lambda x: x.lower())
+    df["account_name"] = "Chase College"
+
+    return df[RAW_TRANSACT_SCHEMA + ["type"]]
 

@@ -50,5 +50,6 @@ def load_trans() -> pd.DataFrame:
     df["amount"] = df["item_total"].apply(lambda x: float(x.replace("$", "")))
     df["transaction_type"] = "debit"
     df.rename(columns={"order_date": "date"}, inplace=True)
+    df["date"] = df["date"].apply(lambda x: pd.to_datetime(x).date())
 
     return df[RAW_TRANSACT_SCHEMA]

@@ -2,19 +2,19 @@ from os import path
 import pandas as pd
 
 
-def update_raw_transactions_file(transact_file_path, new_file_path, subcols) -> str:
-    """takes the current csv in folder and new appends transaction_data from files in downloads"""
+def update_raw_transactions_file(transact_file_path, new_file_path, subcols, index_col=False) -> str:
+    """takes the current csv in folder and appends new transaction_data from files in downloads"""
 
     logs = f"\n\nupdating: {transact_file_path}"
     logs += f"\n\nusing: {new_file_path}"
 
-    new_df = pd.read_csv(new_file_path)[subcols]
+    new_df = pd.read_csv(new_file_path, index_col=index_col)[subcols]
     new_df.drop_duplicates(inplace=True)
 
     # if previous raw transactions exist
     if path.exists(transact_file_path):
 
-        curr_df = pd.read_csv(transact_file_path)[subcols]
+        curr_df = pd.read_csv(transact_file_path, index_col=index_col)[subcols]
         concat_dfs = pd.concat([curr_df, new_df])[subcols]
         concat_dfs.drop_duplicates(inplace=True)
 

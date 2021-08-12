@@ -9,8 +9,9 @@ services:
     ports:
       - 8888:8888
     volumes:
-      - ./src/spending-tracker/:/home/jovyan/spending-tracker
-      - ./jupyter/notebooks:/home/jovyan/notebooks
+      - ./src/spending-tracker/:/src
+      - ./src/jupyter/notebooks:/home/jovyan/notebooks
+      - /Users/caleb.crouse/Downloads:/src/transaction_data/downloads
     environment:
       JUPYTER_ENABLE_LAB: "yes"
 
@@ -21,5 +22,5 @@ services:
     ports:
       - 8501:8501
     volumes:
-      - /Users/caleb.crouse/Downloads:/src/data/downloads
+      - /Users/caleb.crouse/Downloads:/src/transaction_data/downloads
       - ./src/spending-tracker:/src
